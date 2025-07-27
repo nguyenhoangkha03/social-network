@@ -308,7 +308,7 @@
               <i class="fas fa-plus" style="margin-right: var(--space-2);"></i>
               Viết bài mới
             </a>
-            <a href="/messages">
+            <a href="/chat">
               <i class="fas fa-comments" style="margin-right: var(--space-2);"></i>
               Tin nhắn
             </a>
@@ -645,7 +645,7 @@
   <!-- Floating Chat Button -->
   @if(isset($user) && $user)
     <div class="floating-chat-btn" id="floatingChatBtn" style="position: fixed; bottom: var(--space-6); right: var(--space-6); z-index: var(--z-50);">
-      <a href="/messages" style="width: 60px; height: 60px; background: var(--gradient-primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); text-decoration: none; box-shadow: var(--shadow-xl); transition: all var(--duration-300) var(--ease-back); animation: floatChat 3s ease-in-out infinite;">
+      <a href="/chat" style="width: 60px; height: 60px; background: var(--gradient-primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); text-decoration: none; box-shadow: var(--shadow-xl); transition: all var(--duration-300) var(--ease-back); animation: floatChat 3s ease-in-out infinite;">
         <i class="fas fa-comments" style="font-size: var(--text-xl);"></i>
       </a>
       <div style="position: absolute; top: -2px; right: -2px; width: 16px; height: 16px; background: var(--error); border-radius: var(--radius-full); border: 2px solid var(--surface-primary); display: none;" id="chatNotification"></div>

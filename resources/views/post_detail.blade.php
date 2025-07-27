@@ -3,160 +3,758 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $post->tieude ?? 'Bài viết' }} - SpiderClone</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ $post->tieude ?? 'Bài viết' }} - ChatPost</title>
+    
+    <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Modern CSS -->
     <style>
-        body { font-family: 'Roboto', Arial, sans-serif; background: #f6f7fb; margin: 0; }
-        .container { max-width: 800px; margin: 40px auto; background: #fff; border-radius: 14px; box-shadow: 0 2px 16px rgba(0,0,0,0.07); padding: 36px 40px; }
-        .post-title { font-size: 2.1rem; font-weight: 700; margin-bottom: 12px; color: #222; }
-        .post-meta { color: #888; font-size: 1rem; margin-bottom: 18px; }
-        .post-cover { width: 100%; max-height: 340px; object-fit:cover; border-radius: 10px; margin-bottom: 18px; }
-        .post-content { font-size: 1.15rem; color: #222; line-height: 1.7; margin-bottom: 24px; white-space: pre-line; }
-        .post-tags { color: #007bff; font-size: 1rem; margin-bottom: 10px; }
-        .back-link { display:inline-block; margin-bottom:18px; color:#007bff; text-decoration:underline; }
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --surface: #ffffff;
+            --surface-secondary: #f8fafc;
+            --surface-tertiary: #f1f5f9;
+            --surface-hover: #e2e8f0;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-5: 1.25rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            --space-20: 5rem;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+        
+        .post-card {
+            background: var(--surface);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            margin-bottom: var(--space-8);
+        }
+        
+        .post-header {
+            padding: var(--space-8);
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: var(--space-6);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-lg);
+            transition: all 0.2s ease;
+        }
+        
+        .back-link:hover {
+            background: var(--surface-secondary);
+            transform: translateX(-2px);
+        }
+        
+        .post-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            color: var(--text-primary);
+            margin-bottom: var(--space-4);
+        }
+        
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: var(--space-6);
+        }
+        
+        .post-meta a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .post-meta a:hover {
+            text-decoration: underline;
+        }
+        
+        .follow-btn {
+            background: none;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: var(--space-2) var(--space-4);
+            border-radius: var(--radius-xl);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .follow-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .follow-btn.following {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .post-cover {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--space-6);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .post-content {
+            padding: var(--space-8);
+        }
+        
+        .content-text {
+            font-size: 1.125rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+            margin-bottom: var(--space-6);
+        }
+        
+        .content-text h1, .content-text h2, .content-text h3 {
+            margin: var(--space-6) 0 var(--space-4) 0;
+            color: var(--text-primary);
+        }
+        
+        .content-text p {
+            margin-bottom: var(--space-4);
+        }
+        
+        .content-text img {
+            max-width: 100%;
+            height: auto;
+            border-radius: var(--radius-lg);
+            margin: var(--space-4) 0;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .post-tags {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .font-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+            padding: var(--space-4);
+            background: var(--surface-secondary);
+            border-radius: var(--radius-lg);
+        }
+        
+        .font-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-3);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .font-btn:hover {
+            background: var(--surface-hover);
+        }
+        
+        .post-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-6);
+            padding: var(--space-6);
+            border-top: 1px solid var(--border-light);
+            background: var(--surface-secondary);
+        }
+        
+        .like-section {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .like-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: var(--space-2);
+            border-radius: var(--radius-lg);
+            transition: all 0.2s ease;
+        }
+        
+        .like-btn:hover {
+            background: var(--surface-hover);
+            transform: scale(1.1);
+        }
+        
+        .like-btn.liked {
+            color: var(--error);
+        }
+        
+        .like-count {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.125rem;
+        }
+        
+        .comments-section {
+            background: var(--surface);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--space-8);
+        }
+        
+        .comments-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--space-6);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .comment-form {
+            display: flex;
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+            padding: var(--space-6);
+            background: var(--surface-secondary);
+            border-radius: var(--radius-xl);
+        }
+        
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .comment-input {
+            flex: 1;
+            padding: var(--space-4);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-xl);
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+            font-size: 1rem;
+            background: var(--surface);
+            transition: border-color 0.2s ease;
+        }
+        
+        .comment-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .send-btn {
+            padding: var(--space-4) var(--space-6);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            transition: all 0.2s ease;
+        }
+        
+        .send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+        
         .comment-item {
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            padding: 16px;
+            background: var(--surface-secondary);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            margin-bottom: var(--space-6);
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
         }
+        
+        .comment-item:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .comment-item.pinned {
+            background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+            border: 2px solid var(--primary);
+            position: relative;
+        }
+        
+        .pinned-badge {
+            position: absolute;
+            top: var(--space-4);
+            right: var(--space-4);
+            background: var(--primary);
+            color: white;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-xl);
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-1);
+        }
+        
+        .comment-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-3);
+        }
+        
+        .comment-author {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .author-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .comment-time {
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+        }
+        
+        .comment-content {
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-bottom: var(--space-4);
+        }
+        
+        .comment-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+        
+        .reply-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+        
+        .reply-btn:hover {
+            background: var(--surface-hover);
+        }
+        
+        .more-btn {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--radius-md);
+            font-size: 1.25rem;
+            transition: all 0.2s ease;
+        }
+        
+        .more-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text-secondary);
+        }
+        
+        .more-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            z-index: 50;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            min-width: 150px;
+            overflow: hidden;
+        }
+        
+        .menu-item {
+            width: 100%;
+            background: none;
+            border: none;
+            padding: var(--space-3) var(--space-4);
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            transition: background 0.2s ease;
+        }
+        
+        .menu-item:hover {
+            background: var(--surface-secondary);
+        }
+        
+        .menu-item.danger {
+            color: var(--error);
+        }
+        
+        .menu-item.danger:hover {
+            background: rgb(254 242 242);
+        }
+        
         .replies-list {
-            margin-left: 40px;   /* Thụt vào 40px */
-            margin-top: 10px;
+            margin-left: var(--space-12);
+            margin-top: var(--space-6);
+            border-left: 2px solid var(--border);
+            padding-left: var(--space-6);
         }
+        
         .reply-item {
-            background: #f4f6fa;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            padding: 12px;
-            border-left: 3px solid #007bff; /* Viền xanh nổi bật */
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+        
+        .reply-form {
+            display: none;
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+        }
+        
+        .reply-form.active {
+            display: flex;
+            gap: var(--space-3);
+            align-items: flex-start;
+        }
+        
+        .reply-input {
+            flex: 1;
+            padding: var(--space-3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        
+        .reply-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--space-4);
+            }
+            
+            .post-header, .post-content, .comments-section {
+                padding: var(--space-6);
+            }
+            
+            .post-title {
+                font-size: 2rem;
+            }
+            
+            .replies-list {
+                margin-left: var(--space-6);
+                padding-left: var(--space-4);
+            }
+            
+            .comment-form {
+                flex-direction: column;
+                gap: var(--space-3);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="{{ route('home') }}" class="back-link"><i class="fas fa-arrow-left"></i> Về trang chủ</a>
-        <div class="post-title">{{ $post->tieude }}</div>
-        <div class="post-meta">
-            <span><i class="fas fa-user"></i> <a href="{{ route('user.profile', $post->user->id_user) }}" style="color: inherit; text-decoration: underline;">{{ $post->user->hoten ?? $post->user->username ?? 'Tác giả' }}</a></span>
-            &nbsp;|&nbsp;
-            <span><i class="fas fa-calendar"></i> {{ $post->thoigiandang ? $post->thoigiandang->format('d/m/Y H:i') : '' }}</span>
-            @if(isset($user) && $user && $user->id_user != $post->user->id_user)
-            &nbsp;|&nbsp;
-            <button id="followBtn" class="follow-btn" data-user-id="{{ $post->user->id_user }}" data-following="{{ $user->isFollowing($post->user->id_user) ? 'true' : 'false' }}" style="background: none; border: 1px solid #007bff; color: #007bff; padding: 4px 12px; border-radius: 12px; cursor: pointer; font-size: 0.9rem;">
-                {{ $user->isFollowing($post->user->id_user) ? 'Đang theo dõi' : 'Theo dõi' }}
-            </button>
-            @endif
-        </div>
-        @if($post->anh_bia)
-            <img src="{{ asset($post->anh_bia) }}" alt="Ảnh bìa" class="post-cover">
-        @endif
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-            <button onclick="changeFontSize(1)" style="background:#e0e0e0;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:1.1rem;">A+</button>
-            <button onclick="changeFontSize(-1)" style="background:#e0e0e0;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:1.1rem;">A-</button>
-        </div>
-        <div class="post-content">{!! $post->noidung !!}</div>
-        @if($post->dinhkhem)
-            <div class="post-tags"><i class="fas fa-tags"></i> {{ $post->dinhkhem }}</div>
-        @endif
-        <div class="post-actions" style="margin-top: 20px; display: flex; align-items: center; gap: 16px;">
-            <div class="like-section" style="display: flex; align-items: center; gap: 8px;">
-                <span class="like-count" style="font-weight: 500; color: #333;">{{ $post->soluotlike ?? 0 }}</span>
-                @if(isset($user) && $user)
-                    <button id="likeBtn" data-post-id="{{ $post->id_baiviet }}" data-liked="{{ $userLiked ? 'true' : 'false' }}" style="background:none;border:none;cursor:pointer;color:{{ $userLiked ? '#e74c3c' : '#ccc' }};font-size:1.2rem;">
-                        <i class="fas fa-heart"></i>
+        <!-- Post Card -->
+        <article class="post-card">
+            <!-- Post Header -->
+            <header class="post-header">
+                <a href="{{ route('home') }}" class="back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    Về trang chủ
+                </a>
+                
+                <h1 class="post-title">{{ $post->tieude }}</h1>
+                
+                <div class="post-meta">
+                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <i class="fas fa-user"></i>
+                        <a href="{{ route('user.profile', $post->user->id_user) }}">{{ $post->user->hoten ?? $post->user->username ?? 'Tác giả' }}</a>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ $post->thoigiandang ? $post->thoigiandang->format('d/m/Y H:i') : '' }}</span>
+                    </div>
+                    
+                    @if(isset($user) && $user && $user->id_user != $post->user->id_user)
+                        <button id="followBtn" class="follow-btn {{ $user->isFollowing($post->user->id_user) ? 'following' : '' }}" data-user-id="{{ $post->user->id_user }}" data-following="{{ $user->isFollowing($post->user->id_user) ? 'true' : 'false' }}">
+                            <i class="fas fa-{{ $user->isFollowing($post->user->id_user) ? 'check' : 'plus' }}"></i>
+                            {{ $user->isFollowing($post->user->id_user) ? 'Đang theo dõi' : 'Theo dõi' }}
+                        </button>
+                    @endif
+                </div>
+                
+                @if($post->anh_bia)
+                    <img src="{{ asset($post->anh_bia) }}" alt="Ảnh bìa" class="post-cover">
+                @endif
+            </header>
+            
+            <!-- Post Content -->
+            <div class="post-content">
+                <div class="font-controls">
+                    <span style="color: var(--text-secondary); font-weight: 500;">Kích thước chữ:</span>
+                    <button class="font-btn" onclick="changeFontSize(2)">
+                        <i class="fas fa-plus"></i> A
                     </button>
-                @else
-                    <i class="fas fa-heart" style="color:#ccc;font-size:1.2rem;"></i>
+                    <button class="font-btn" onclick="changeFontSize(-2)">
+                        <i class="fas fa-minus"></i> A
+                    </button>
+                    <button class="font-btn" onclick="resetFontSize()">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+                
+                <div class="content-text" id="postContent">{!! $post->noidung !!}</div>
+                
+                @if($post->dinhkhem)
+                    <div class="post-tags">
+                        <i class="fas fa-tags"></i>
+                        {{ $post->dinhkhem }}
+                    </div>
                 @endif
             </div>
-        </div>
+            
+            <!-- Post Actions -->
+            <div class="post-actions">
+                <div class="like-section">
+                    <span class="like-count">{{ $post->soluotlike ?? 0 }}</span>
+                    @if(isset($user) && $user)
+                        <button id="likeBtn" class="like-btn {{ $userLiked ? 'liked' : '' }}" data-post-id="{{ $post->id_baiviet }}" data-liked="{{ $userLiked ? 'true' : 'false' }}">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    @else
+                        <i class="fas fa-heart" style="color: var(--text-tertiary); font-size: 1.5rem;"></i>
+                    @endif
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: var(--space-2); color: var(--text-secondary);">
+                    <i class="fas fa-eye"></i>
+                    <span>{{ number_format(rand(100, 5000)) }} lượt xem</span>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: var(--space-2); color: var(--text-secondary);">
+                    <i class="fas fa-share"></i>
+                    <button style="background: none; border: none; color: inherit; cursor: pointer; font-weight: 500;" onclick="sharePost()">
+                        Chia sẻ
+                    </button>
+                </div>
+            </div>
+        </article>
 
-        <!-- Phần comment mới đẹp, hỗ trợ lồng nhiều cấp -->
-        <div class="comments-section" style="margin-top: 48px; border-top: 1px solid #eee; padding-top: 36px;">
-            <h3 style="margin-bottom: 24px; font-size: 1.35rem; color: #222; font-weight: 700; letter-spacing: 0.5px;">
-                <i class="fas fa-comments"></i> Bình luận
-            </h3>
+        <!-- Comments Section -->
+        <section class="comments-section">
+            <h2 class="comments-title">
+                <i class="fas fa-comments"></i>
+                Bình luận ({{ count($comments) }})
+            </h2>
             @if(isset($user) && $user)
-            <form id="commentForm" style="display: flex; gap: 14px; align-items: flex-start; margin-bottom: 32px;">
-                <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=007bff&color=fff&size=48" alt="avatar" style="width:48px;height:48px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.07);">
-                <textarea id="commentContent" name="noidung" placeholder="Viết bình luận của bạn..." style="flex: 1; padding: 14px 16px; border: 1.5px solid #e0e3eb; border-radius: 12px; resize: vertical; min-height: 56px; font-family: inherit; font-size: 1.05rem; background: #f8fafd;"></textarea>
-                <button type="button" id="sendCommentBtn" style="padding: 14px 22px; background: linear-gradient(90deg,#007bff,#00c6ff); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 1.05rem; box-shadow:0 2px 8px rgba(0,123,255,0.08); transition: background 0.2s;">
-                    <i class="fas fa-paper-plane"></i> Gửi
-                </button>
-            </form>
+                <form class="comment-form" id="commentForm">
+                    <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=2563eb&color=fff&size=48" alt="Avatar" class="avatar">
+                    <textarea id="commentContent" class="comment-input" placeholder="Viết bình luận của bạn..."></textarea>
+                    <button type="button" id="sendCommentBtn" class="send-btn">
+                        <i class="fas fa-paper-plane"></i>
+                        Gửi
+                    </button>
+                </form>
             @else
-            <div style="margin-bottom: 32px; color: #888; font-size: 1.05rem;">Bạn cần <a href="{{ route('login') }}" style="color:#007bff;text-decoration:underline;">đăng nhập</a> để bình luận.</div>
+                <div style="text-align: center; padding: var(--space-8); background: var(--surface-secondary); border-radius: var(--radius-xl); margin-bottom: var(--space-8);">
+                    <i class="fas fa-lock" style="font-size: 2rem; color: var(--text-tertiary); margin-bottom: var(--space-4);"></i>
+                    <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">Bạn cần đăng nhập để tham gia bình luận</p>
+                    <a href="{{ route('login') }}" style="display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-6); background: var(--primary); color: white; text-decoration: none; border-radius: var(--radius-xl); font-weight: 600; transition: all 0.2s ease;">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Đăng nhập ngay
+                    </a>
+                </div>
             @endif
             <div id="commentsList">
-                {{-- Hiển thị bình luận ghim nếu có --}}
+                {{-- Pinned Comment --}}
                 @if($post->pinnedComment)
-                <div class="comment-item" data-comment-id="{{ $post->pinnedComment->id_binhluan }}" style="background:#eaf6ff;border:2px solid #007bff;position:relative;box-shadow:0 2px 8px rgba(0,123,255,0.08);margin-bottom:28px;">
-                    <span style="position:absolute;top:10px;right:18px;color:#007bff;font-weight:700;font-size:1.1rem;"><i class="fas fa-thumbtack"></i> Được ghim</span>
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode($post->pinnedComment->user->hoten ?? $post->pinnedComment->user->username ?? 'U') }}&background=007bff&color=fff&size=40" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
-                    <div style="flex:1;display:inline-block;vertical-align:top;margin-left:12px;">
-                        <div style="font-weight:600;color:#222;">{{ $post->pinnedComment->user->hoten ?? $post->pinnedComment->user->username ?? 'Tác giả' }} <span style="color:#888;font-size:0.95em;font-weight:400;margin-left:8px;">• {{ $post->pinnedComment->thoigiantao ? $post->pinnedComment->thoigiantao->diffForHumans() : '' }}</span></div>
-                        <div style="color:#333;line-height:1.6;margin:6px 0 0 0;">{{ $post->pinnedComment->noidung }}</div>
+                    <div class="comment-item pinned" data-comment-id="{{ $post->pinnedComment->id_binhluan }}">
+                        <div class="pinned-badge">
+                            <i class="fas fa-thumbtack"></i>
+                            Được ghim
+                        </div>
+                        
+                        <div class="comment-header">
+                            <div class="comment-author">
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode($post->pinnedComment->user->hoten ?? $post->pinnedComment->user->username ?? 'U') }}&background=2563eb&color=fff&size=40" alt="Avatar" class="avatar" style="width: 40px; height: 40px;">
+                                <div>
+                                    <div class="author-name">{{ $post->pinnedComment->user->hoten ?? $post->pinnedComment->user->username ?? 'Tác giả' }}</div>
+                                    <div class="comment-time">{{ $post->pinnedComment->thoigiantao ? $post->pinnedComment->thoigiantao->diffForHumans() : '' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="comment-content">{{ $post->pinnedComment->noidung }}</div>
                     </div>
-                </div>
                 @endif
                 @foreach($comments as $comment)
-                <div class="comment-item" data-comment-id="{{ $comment->id_binhluan }}" style="display:flex;gap:14px;align-items:flex-start;position:relative;">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode($comment->user->hoten ?? $comment->user->username ?? 'U') }}&background=6c757d&color=fff&size=40" alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
-                    <div style="flex:1;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;">
-                            <div style="font-weight:600;color:#222;">{{ $comment->user->hoten ?? $comment->user->username ?? 'Tác giả' }} <span style="color:#888;font-size:0.95em;font-weight:400;margin-left:8px;">• {{ $comment->thoigiantao ? $comment->thoigiantao->diffForHumans() : '' }}</span></div>
-                            <div class="comment-actions" style="position:relative;">
-                                <button class="more-btn" data-comment-id="{{ $comment->id_binhluan }}" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;padding:0 8px;">&#8230;</button>
-                                <div class="more-menu" id="menu-{{ $comment->id_binhluan }}" style="display:none;position:absolute;right:0;top:28px;z-index:10;background:#fff;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);min-width:120px;">
-                                    <button class="menu-item" style="width:100%;background:none;border:none;padding:10px 18px;text-align:left;cursor:pointer;font-size:1rem;color:#222;">Chỉnh sửa</button>
-                                    <button class="menu-item" style="width:100%;background:none;border:none;padding:10px 18px;text-align:left;cursor:pointer;font-size:1rem;color:#e74c3c;">Xóa</button>
-                                    <button class="menu-item" style="width:100%;background:none;border:none;padding:10px 18px;text-align:left;cursor:pointer;font-size:1rem;color:#007bff;">Ghim</button>
+                    <div class="comment-item" data-comment-id="{{ $comment->id_binhluan }}">
+                        <div class="comment-header">
+                            <div class="comment-author">
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode($comment->user->hoten ?? $comment->user->username ?? 'U') }}&background=64748b&color=fff&size=40" alt="Avatar" class="avatar" style="width: 40px; height: 40px;">
+                                <div>
+                                    <div class="author-name">{{ $comment->user->hoten ?? $comment->user->username ?? 'Tác giả' }}</div>
+                                    <div class="comment-time">{{ $comment->thoigiantao ? $comment->thoigiantao->diffForHumans() : '' }}</div>
+                                </div>
+                            </div>
+                            
+                            <div style="position: relative;">
+                                <button class="more-btn" data-comment-id="{{ $comment->id_binhluan }}">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                                <div class="more-menu" id="menu-{{ $comment->id_binhluan }}" style="display: none;">
+                                    <button class="menu-item">Chỉnh sửa</button>
+                                    <button class="menu-item danger">Xóa</button>
+                                    <button class="menu-item">Ghim</button>
                                 </div>
                             </div>
                         </div>
-                        <div style="color:#333;line-height:1.6;margin:6px 0 0 0;">{{ $comment->noidung }}</div>
-                        <button class="reply-btn" data-comment-id="{{ $comment->id_binhluan }}" style="margin-top:8px;background:none;border:none;color:#007bff;cursor:pointer;font-size:0.97rem;font-weight:500;">Trả lời</button>
-                        <!-- Form trả lời inline, ẩn mặc định -->
-                        <form class="reply-form" data-parent-id="{{ $comment->id_binhluan }}" style="display:none;gap:10px;align-items:flex-start;margin-top:10px;">
-                            <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=007bff&color=fff&size=32" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
-                            <textarea placeholder="Trả lời bình luận này..." style="flex:1;padding:10px 12px;border:1.5px solid #e0e3eb;border-radius:10px;resize:vertical;min-height:40px;font-family:inherit;font-size:1rem;background:#f8fafd;"></textarea>
-                            <button type="button" class="sendReplyBtn" data-parent-id="{{ $comment->id_binhluan }}" style="padding:10px 18px;background:linear-gradient(90deg,#007bff,#00c6ff);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:1rem;">Gửi</button>
-                        </form>
-                        <!-- Reply cấp 2 -->
+                        
+                        <div class="comment-content">{{ $comment->noidung }}</div>
+                        
+                        <div class="comment-actions">
+                            <button class="reply-btn" data-comment-id="{{ $comment->id_binhluan }}">
+                                <i class="fas fa-reply"></i>
+                                Trả lời
+                            </button>
+                        </div>
+                        @if(isset($user) && $user)
+                            <form class="reply-form" data-parent-id="{{ $comment->id_binhluan }}">
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=2563eb&color=fff&size=32" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%;">
+                                <textarea class="reply-input" placeholder="Trả lời bình luận này..."></textarea>
+                                <button type="button" class="send-btn sendReplyBtn" data-parent-id="{{ $comment->id_binhluan }}" style="padding: var(--space-3) var(--space-4); font-size: 0.875rem;">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Gửi
+                                </button>
+                            </form>
+                        @endif
+                        <!-- Replies -->
                         @if($comment->replies && $comment->replies->count())
-                        <div class="replies-list" style="margin-left:40px;margin-top:10px;">
-                            @foreach($comment->replies as $reply)
-                            <div class="comment-item" data-comment-id="{{ $reply->id_binhluan }}" style="display:flex;gap:14px;align-items:flex-start;background:#f4f6fa;position:relative;">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($reply->user->hoten ?? $reply->user->username ?? 'U') }}&background=17a2b8&color=fff&size=36" alt="avatar" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
-                                <div style="flex:1;">
-                                    <div style="display:flex;align-items:center;justify-content:space-between;">
-                                        <div style="font-weight:600;color:#222;">{{ $reply->user->hoten ?? $reply->user->username ?? 'Tác giả' }} <span style="color:#888;font-size:0.95em;font-weight:400;margin-left:8px;">• {{ $reply->thoigiantao ? $reply->thoigiantao->diffForHumans() : '' }}</span></div>
-                                        <div class="comment-actions" style="position:relative;">
-                                            <button class="more-btn" data-comment-id="{{ $reply->id_binhluan }}" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;padding:0 8px;">&#8230;</button>
-                                            <div class="more-menu" id="menu-{{ $reply->id_binhluan }}" style="display:none;position:absolute;right:0;top:28px;z-index:10;background:#fff;border:1px solid #eee;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);min-width:120px;">
-                                                <button class="menu-item" style="width:100%;background:none;border:none;padding:10px 18px;text-align:left;cursor:pointer;font-size:1rem;color:#222;">Chỉnh sửa</button>
-                                                <button class="menu-item" style="width:100%;background:none;border:none;padding:10px 18px;text-align:left;cursor:pointer;font-size:1rem;color:#e74c3c;">Xóa</button>
-                                                <button class="menu-item" style="width:100%;background:none;border:none;padding:10px 18px;text-align:left;cursor:pointer;font-size:1rem;color:#007bff;">Ghim</button>
+                            <div class="replies-list">
+                                @foreach($comment->replies as $reply)
+                                    <div class="reply-item" data-comment-id="{{ $reply->id_binhluan }}">
+                                        <div class="comment-header">
+                                            <div class="comment-author">
+                                                <img src="https://ui-avatars.com/api/?name={{ urlencode($reply->user->hoten ?? $reply->user->username ?? 'U') }}&background=06b6d4&color=fff&size=36" alt="Avatar" style="width: 36px; height: 36px; border-radius: 50%;">
+                                                <div>
+                                                    <div class="author-name">{{ $reply->user->hoten ?? $reply->user->username ?? 'Tác giả' }}</div>
+                                                    <div class="comment-time">{{ $reply->thoigiantao ? $reply->thoigiantao->diffForHumans() : '' }}</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div style="position: relative;">
+                                                <button class="more-btn" data-comment-id="{{ $reply->id_binhluan }}">
+                                                    <i class="fas fa-ellipsis-h"></i>
+                                                </button>
+                                                <div class="more-menu" id="menu-{{ $reply->id_binhluan }}" style="display: none;">
+                                                    <button class="menu-item">Chỉnh sửa</button>
+                                                    <button class="menu-item danger">Xóa</button>
+                                                </div>
                                             </div>
                                         </div>
+                                        
+                                        <div class="comment-content">{{ $reply->noidung }}</div>
+                                        
+                                        <div class="comment-actions">
+                                            <button class="reply-btn" data-comment-id="{{ $comment->id_binhluan }}">
+                                                <i class="fas fa-reply"></i>
+                                                Trả lời
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div style="color:#333;line-height:1.6;margin:6px 0 0 0;">{{ $reply->noidung }}</div>
-                                    <button class="reply-btn" data-comment-id="{{ $comment->id_binhluan }}" style="margin-top:8px;background:none;border:none;color:#007bff;cursor:pointer;font-size:0.97rem;font-weight:500;">Trả lời</button>
-                                    <!-- Form trả lời inline, ẩn mặc định -->
-                                    <form class="reply-form" data-parent-id="{{ $comment->id_binhluan }}" style="display:none;gap:10px;align-items:flex-start;margin-top:10px;">
-                                        <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=007bff&color=fff&size=32" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
-                                        <textarea placeholder="Trả lời bình luận này..." style="flex:1;padding:10px 12px;border:1.5px solid #e0e3eb;border-radius:10px;resize:vertical;min-height:40px;font-family:inherit;font-size:1rem;background:#f8fafd;"></textarea>
-                                        <button type="button" class="sendReplyBtn" data-parent-id="{{ $comment->id_binhluan }}" style="padding:10px 18px;background:linear-gradient(90deg,#007bff,#00c6ff);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:1rem;">Gửi</button>
-                                    </form>
-                                </div>
+                                @endforeach
                             </div>
-                            @endforeach
-                        </div>
                         @endif
                     </div>
-                </div>
                 @endforeach
             </div>
         </div>

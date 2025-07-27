@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\BaiViet;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PostController extends Controller
 {
@@ -42,30 +43,37 @@ class PostController extends Controller
     public function store(Request $request)
     {
         // Debug: Log session user_id và toàn bộ request
-        \Log::info('DEBUG_POST: Session user_id: ' . json_encode(Session::get('user_id')));
-        \Log::info('DEBUG_POST: Request all: ' . json_encode($request->all()));
+        Log::info('DEBUG_POST: Session user_id: ' . json_encode(Session::get('user_id')));
+        Log::info('DEBUG_POST: Request all: ' . json_encode($request->except(['noidung']))); // Exclude noidung to avoid large logs
+        Log::info('DEBUG_POST: Content length: ' . strlen($request->input('noidung', '')));
+
         // Kiểm tra user đã đăng nhập chưa
         if (!Session::has('user_id')) {
             return redirect()->route('login')->with('error', 'Vui lòng đăng nhập để đăng bài viết');
         }
 
-        // Validation
-        $request->validate([
-            'tieude' => 'required|string|min:10|max:255',
-            'mota' => 'nullable|string|max:1000',
-            'noidung' => 'required|string|min:50',
-            'anh_bia' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB
-            'dinhkhem' => 'nullable|string|max:255',
-        ], [
-            'tieude.required' => 'Tiêu đề không được để trống',
-            'tieude.min' => 'Tiêu đề phải có ít nhất 10 ký tự',
-            'tieude.max' => 'Tiêu đề không được vượt quá 255 ký tự',
-            'noidung.required' => 'Nội dung không được để trống',
-            'noidung.min' => 'Nội dung phải có ít nhất 50 ký tự',
-            'anh_bia.image' => 'File phải là hình ảnh',
-            'anh_bia.mimes' => 'Chỉ chấp nhận file: jpeg, png, jpg, gif',
-            'anh_bia.max' => 'Kích thước file không được vượt quá 5MB',
-        ]);
+        // Validation - Relaxed validation for content with HTML
+        try {
+            $request->validate([
+                'tieude' => 'required|string|min:10|max:255',
+                'mota' => 'nullable|string|max:2000',
+                'noidung' => 'required|string|min:10', // Reduced min length for HTML content
+                'anh_bia' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB, added webp
+                'dinhkhem' => 'nullable|string|max:500',
+            ], [
+                'tieude.required' => 'Tiêu đề không được để trống',
+                'tieude.min' => 'Tiêu đề phải có ít nhất 10 ký tự',
+                'tieude.max' => 'Tiêu đề không được vượt quá 255 ký tự',
+                'noidung.required' => 'Nội dung không được để trống',
+                'noidung.min' => 'Nội dung phải có ít nhất 10 ký tự',
+                'anh_bia.image' => 'File phải là hình ảnh',
+                'anh_bia.mimes' => 'Chỉ chấp nhận file: jpeg, png, jpg, gif, webp',
+                'anh_bia.max' => 'Kích thước file không được vượt quá 10MB',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed: ' . json_encode($e->errors()));
+            return back()->withErrors($e->errors())->withInput();
+        }
 
         try {
             // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
@@ -81,16 +89,22 @@ class PostController extends Controller
             $anh_bia_path = null;
             if ($request->hasFile('anh_bia')) {
                 $file = $request->file('anh_bia');
-                $fileName = time() . '_' . $file->getClientOriginalName();
+                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
                 $uploadPath = public_path('uploads/posts');
-                
+
                 // Tạo thư mục nếu chưa tồn tại
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0755, true);
                 }
-                
-                $file->move($uploadPath, $fileName);
-                $anh_bia_path = 'uploads/posts/' . $fileName;
+
+                try {
+                    $file->move($uploadPath, $fileName);
+                    $anh_bia_path = 'uploads/posts/' . $fileName;
+                    Log::info('File uploaded successfully: ' . $anh_bia_path);
+                } catch (\Exception $e) {
+                    Log::error('File upload failed: ' . $e->getMessage());
+                    throw new \Exception('Không thể upload ảnh bìa: ' . $e->getMessage());
+                }
             }
 
             // Tạo bài viết mới
@@ -106,7 +120,7 @@ class PostController extends Controller
             $baiviet->thoigiancapnhat = now();
             $baiviet->soluotlike = 0;
             $baiviet->is_draft = $request->has('save_draft') ? true : false;
-            
+
             $result = $baiviet->save();
 
             if (!$result) {
@@ -119,14 +133,13 @@ class PostController extends Controller
                 return redirect()->route('post.create')->with('success', 'Đã lưu nháp bài viết!');
             }
             return redirect()->route('home')->with('success', 'Đăng bài viết thành công!');
-
         } catch (\Exception $e) {
             DB::rollback();
             
             // Log lỗi để debug
-            \Log::error('Lỗi khi tạo bài viết: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+            Log::error('Lỗi khi tạo bài viết: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
             return back()->withInput()->with('error', 'Có lỗi xảy ra khi đăng bài viết: ' . $e->getMessage());
         }
     }
@@ -309,14 +322,74 @@ class PostController extends Controller
 
     public function uploadImage(Request $request)
     {
-        if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('uploads/posts', $fileName, 'public');
-            $url = asset('storage/' . $path);
-            return response()->json(['url' => $url]);
+        try {
+            $request->validate([
+                'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            ]);
+
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+                // Create directory if not exists
+                $uploadPath = public_path('uploads/posts');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
+                $file->move($uploadPath, $fileName);
+                $url = asset('uploads/posts/' . $fileName);
+
+                return response()->json([
+                    'success' => true,
+                    'url' => $url,
+                    'filename' => $fileName
+                ]);
+            }
+
+            return response()->json(['error' => 'No file uploaded'], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Upload failed: ' . $e->getMessage()
+            ], 500);
         }
-        return response()->json(['error' => 'No file uploaded'], 400);
+    }
+
+    public function uploadMultipleImages(Request $request)
+    {
+        try {
+            $request->validate([
+                'images' => 'required|array|max:10',
+                'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            ]);
+
+            $uploadedFiles = [];
+            $uploadPath = public_path('uploads/posts');
+
+            // Create directory if not exists
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
+            foreach ($request->file('images') as $file) {
+                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move($uploadPath, $fileName);
+
+                $uploadedFiles[] = [
+                    'url' => asset('uploads/posts/' . $fileName),
+                    'filename' => $fileName
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'files' => $uploadedFiles
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Upload failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function deleteComment($id)
@@ -367,4 +440,4 @@ class PostController extends Controller
             return response()->json(['success' => true, 'pinned' => true]);
         }
     }
-} 
+}

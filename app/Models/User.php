@@ -84,4 +84,15 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Notification::class, 'user_id', 'id_user');
     }
+
+    // Messaging relationships
+    public function sentMessages()
+    {
+        return $this->hasMany(TinNhan::class, 'id_user', 'id_user');
+    }
+
+    public function receivedMessages()
+    {
+        return $this->hasMany(TinNhan::class, 'receiver_id', 'id_user');
+    }
 }

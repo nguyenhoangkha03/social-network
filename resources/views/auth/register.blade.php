@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     @vite(['resources/css/register.css'])
 </head>
+
 <body>
     <div class="auth-background">
         <div class="auth-container">
@@ -22,20 +24,20 @@
                     <h1 class="form-title">Tạo tài khoản mới</h1>
                     <p class="form-subtitle">Tham gia cộng đồng chia sẻ tri thức</p>
                 </div>
-                
+
                 @if ($errors->any())
-                    <div class="alert error">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
+                <div class="alert error">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
                 @endif
-                
+
                 <form class="auth-form" method="POST" action="{{ url('/register') }}" enctype="multipart/form-data">
                     @csrf
-                    
+
                     <div class="form-group">
                         <label for="username">Tên đăng nhập</label>
                         <div class="input-wrapper">
@@ -43,7 +45,7 @@
                             <input type="text" id="username" name="username" value="{{ old('username') }}" placeholder="Nhập tên đăng nhập" required autofocus>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="hoten">Họ và tên</label>
                         <div class="input-wrapper">
@@ -51,7 +53,7 @@
                             <input type="text" id="hoten" name="hoten" value="{{ old('hoten') }}" placeholder="Nhập họ và tên của bạn">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="email">Email</label>
                         <div class="input-wrapper">
@@ -59,7 +61,7 @@
                             <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="Nhập địa chỉ email của bạn">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="password">Mật khẩu</label>
                         <div class="input-wrapper">
@@ -73,7 +75,7 @@
                             <div class="password-strength-bar" id="passwordStrength"></div>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="password_confirmation">Xác nhận mật khẩu</label>
                         <div class="input-wrapper">
@@ -100,15 +102,15 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="gioitinh">Giới tính</label>
                         <div class="select-wrapper">
                             <i class="fas fa-venus-mars input-icon"></i>
                             <select id="gioitinh" name="gioitinh">
                                 <option value="">Chọn giới tính</option>
-                                <option value="0" @if(old('gioitinh')==='0') selected @endif>Nữ</option>
-                                <option value="1" @if(old('gioitinh')==='1') selected @endif>Nam</option>
+                                <option value="0" @if(old('gioitinh')==='0' ) selected @endif>Nữ</option>
+                                <option value="1" @if(old('gioitinh')==='1' ) selected @endif>Nam</option>
                             </select>
                             <i class="fas fa-chevron-down select-arrow"></i>
                         </div>
@@ -121,7 +123,7 @@
                                 <img id="avatarImg" src="#" alt="Preview" style="display:none;" />
                             </div>
                             <div class="upload-btn">
-                                <input type="file" id="hinhanh" name="hinhanh" accept="image/*" onchange="previewAvatar(event)">
+                                <input type="file" hidden id="hinhanh" name="hinhanh" accept="image/*" onchange="previewAvatar(event)">
                                 <label for="hinhanh" class="upload-label">
                                     <i class="fas fa-camera"></i>
                                     <span>Chọn ảnh</span>
@@ -134,7 +136,7 @@
                         <span>Tạo tài khoản</span>
                     </button>
                 </form>
-                
+
                 <div class="auth-footer">
                     <p class="form-link">Đã có tài khoản? <a href="{{ route('login') }}">Đăng nhập ngay</a></p>
                 </div>
@@ -148,7 +150,7 @@
             const preview = document.getElementById('avatarPreview');
             const img = document.getElementById('avatarImg');
             const icon = preview.querySelector('i');
-            
+
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -165,12 +167,12 @@
                 preview.classList.remove('has-image');
             }
         }
-        
+
         // Toggle password visibility
         function togglePassword(fieldId) {
             const field = document.getElementById(fieldId);
             const eye = document.getElementById(fieldId + '-eye');
-            
+
             if (field.type === 'password') {
                 field.type = 'text';
                 eye.classList.remove('fa-eye');
@@ -181,24 +183,24 @@
                 eye.classList.add('fa-eye');
             }
         }
-        
+
         // Password strength checker
         document.addEventListener('DOMContentLoaded', function() {
             const passwordField = document.getElementById('password');
             const strengthBar = document.getElementById('passwordStrength');
-            
+
             if (passwordField && strengthBar) {
                 passwordField.addEventListener('input', function() {
                     const password = this.value;
                     let strength = 0;
-                    
+
                     // Check password criteria
                     if (password.length >= 8) strength++;
                     if (/[a-z]/.test(password)) strength++;
                     if (/[A-Z]/.test(password)) strength++;
                     if (/[0-9]/.test(password)) strength++;
                     if (/[^a-zA-Z0-9]/.test(password)) strength++;
-                    
+
                     // Update strength bar
                     strengthBar.className = 'password-strength-bar';
                     if (strength <= 2) {
@@ -210,7 +212,7 @@
                     }
                 });
             }
-            
+
             // Form submission loading state
             const form = document.querySelector('.auth-form');
             if (form) {
@@ -226,4 +228,5 @@
         });
     </script>
 </body>
-</html> 
+
+</html>

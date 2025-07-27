@@ -184,10 +184,26 @@ class UserController extends Controller
     // Giao diện nhắn tin với bạn bè
     public function chatWithFriend($friend_id)
     {
-        $currentUser = Session::has('user_id') ? User::find(Session::get('user_id')) : null;
+        if (!Session::has('user_id')) {
+            return redirect()->route('login')->with('error', 'Vui lòng đăng nhập để sử dụng tin nhắn');
+        }
+
+        $currentUser = User::find(Session::get('user_id'));
         $friend = User::find($friend_id);
-        // TODO: Lấy lịch sử tin nhắn giữa 2 user (có thể dùng bảng tinnhan và chanel)
-        $messages = [];
+        
+        if (!$friend) {
+            abort(404, 'Không tìm thấy người dùng');
+        }
+
+        // Lấy lịch sử tin nhắn giữa 2 user
+        $messages = \App\Models\TinNhan::where(function($q) use ($currentUser, $friend_id) {
+                $q->where('id_user', $currentUser->id_user)->where('receiver_id', $friend_id);
+            })->orWhere(function($q) use ($currentUser, $friend_id) {
+                $q->where('id_user', $friend_id)->where('receiver_id', $currentUser->id_user);
+            })
+            ->orderBy('thoigiantao', 'asc')
+            ->get();
+
         return view('friends.chat', compact('friend', 'currentUser', 'messages'));
     }
 
