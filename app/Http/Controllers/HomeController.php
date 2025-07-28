@@ -35,7 +35,7 @@ class HomeController extends Controller
         // Kiểm tra user đã like bài viết nào chưa
         $userLikedPosts = [];
         if ($user) {
-            $userLikedPosts = \App\Models\BaiVietLike::where('id_user', $user->id_user)
+            $userLikedPosts = \App\Models\BaiVietLike::where('user_id', $user->user_id)
                 ->pluck('id_baiviet')
                 ->toArray();
         }
@@ -61,16 +61,27 @@ class HomeController extends Controller
             $users = [];
             $currentUser = \Illuminate\Support\Facades\Session::has('user_id') ? \App\Models\User::find(\Illuminate\Support\Facades\Session::get('user_id')) : null;
             if (!empty($query)) {
-                $users = \App\Models\User::where(function($q) use ($query) {
-                        $q->where('hoten', 'like', "%{$query}%")
-                          ->orWhere('username', 'like', "%{$query}%")
-                          ->orWhere('email', 'like', "%{$query}%");
+                $users = \App\Models\User::where(function ($q) use ($query) {
+                    $q->where('hoten', 'like', "%{$query}%")
+                        ->orWhere('username', 'like', "%{$query}%")
+                        ->orWhere('email', 'like', "%{$query}%");
+                })
+                    ->when($currentUser, function ($q) use ($currentUser) {
+                        $q->where('user_id', '!=', $currentUser->user_id);
                     })
-                    ->when($currentUser, function($q) use ($currentUser) {
-                        $q->where('id_user', '!=', $currentUser->id_user);
-                    })
+                    ->limit(10) // Limit for AJAX requests
                     ->get();
             }
+
+            // Return JSON for AJAX requests
+            if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                return response()->json([
+                    'users' => $users,
+                    'type' => $type,
+                    'query' => $query
+                ]);
+            }
+
             return view('search', compact('users', 'query', 'type', 'currentUser'));
         }
 
@@ -82,56 +93,56 @@ class HomeController extends Controller
 
         $baiviets = \App\Models\BaiViet::with('user')
             ->where('is_draft', false)
-            ->where(function($q) use ($query, $filter) {
+            ->where(function ($q) use ($query, $filter) {
                 if ($filter === 'user') {
-                    $q->whereHas('user', function($userQuery) use ($query) {
+                    $q->whereHas('user', function ($userQuery) use ($query) {
                         $userQuery->where('hoten', 'like', "%{$query}%")
-                                  ->orWhere('username', 'like', "%{$query}%");
+                            ->orWhere('username', 'like', "%{$query}%");
                     });
                 } elseif ($filter === 'title') {
                     $q->where('tieude', 'like', "%{$query}%");
                 } else {
                     $q->where('tieude', 'like', "%{$query}%")
-                      ->orWhere('noidung', 'like', "%{$query}%")
-                      ->orWhere('mota', 'like', "%{$query}%")
-                      ->orWhereHas('user', function($userQuery) use ($query) {
-                          $userQuery->where('hoten', 'like', "%{$query}%")
-                                    ->orWhere('username', 'like', "%{$query}%");
-                      });
+                        ->orWhere('noidung', 'like', "%{$query}%")
+                        ->orWhere('mota', 'like', "%{$query}%")
+                        ->orWhereHas('user', function ($userQuery) use ($query) {
+                            $userQuery->where('hoten', 'like', "%{$query}%")
+                                ->orWhere('username', 'like', "%{$query}%");
+                        });
                 }
             });
 
         if ($user && $liked) {
             if ($liked === 'liked') {
-                $baiviets = $baiviets->whereHas('likes', function($likeQ) use ($user) {
-                    $likeQ->where('id_user', $user->id_user);
+                $baiviets = $baiviets->whereHas('likes', function ($likeQ) use ($user) {
+                    $likeQ->where('user_id', $user->user_id);
                 });
             } elseif ($liked === 'not_liked') {
-                $baiviets = $baiviets->whereDoesntHave('likes', function($likeQ) use ($user) {
-                    $likeQ->where('id_user', $user->id_user);
+                $baiviets = $baiviets->whereDoesntHave('likes', function ($likeQ) use ($user) {
+                    $likeQ->where('user_id', $user->user_id);
                 });
             }
         }
 
         if ($user && $friendPosts === '1') {
-            $friendIds = \App\Models\DanhSachBanBe::where('user_id_1', $user->id_user)
-                ->orWhere('user_id_2', $user->id_user)
+            $friendIds = \App\Models\DanhSachBanBe::where('user_id_1', $user->user_id)
+                ->orWhere('user_id_2', $user->user_id)
                 ->get()
-                ->map(function($row) use ($user) {
-                    return $row->user_id_1 == $user->id_user ? $row->user_id_2 : $row->user_id_1;
+                ->map(function ($row) use ($user) {
+                    return $row->user_id_1 == $user->user_id ? $row->user_id_2 : $row->user_id_1;
                 })->toArray();
-            $baiviets = $baiviets->whereIn('id_user', $friendIds);
+            $baiviets = $baiviets->whereIn('user_id', $friendIds);
         }
 
         $baiviets = $baiviets->orderByDesc('thoigiandang')->get();
 
         $userLikedPosts = [];
         if ($user) {
-            $userLikedPosts = \App\Models\BaiVietLike::where('id_user', $user->id_user)
+            $userLikedPosts = \App\Models\BaiVietLike::where('user_id', $user->user_id)
                 ->pluck('id_baiviet')
                 ->toArray();
         }
 
         return view('search', compact('user', 'baiviets', 'userLikedPosts', 'query', 'filter', 'liked', 'commented', 'friendPosts', 'type'));
     }
-} 
+}

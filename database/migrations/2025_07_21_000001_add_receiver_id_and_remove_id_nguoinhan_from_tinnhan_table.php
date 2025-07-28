@@ -21,8 +21,8 @@ return new class extends Migration
         // Rollback: thêm lại cột id_nguoinhan nếu cần
         Schema::table('tinnhan', function (Blueprint $table) {
             if (!Schema::hasColumn('tinnhan', 'id_nguoinhan')) {
-                $table->unsignedInteger('id_nguoinhan')->nullable()->after('id_user');
+                $table->unsignedInteger('id_nguoinhan')->nullable()->after('user_id');
             }
         });
     }
-}; 
+};

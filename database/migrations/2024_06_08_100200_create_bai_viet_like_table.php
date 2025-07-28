@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('bai_viet_like', function (Blueprint $table) {
-            $table->unsignedInteger('id_user');
+            $table->unsignedInteger('user_id');
             $table->char('id_baiviet', 10);
-            $table->primary(['id_user', 'id_baiviet']);
+            $table->primary(['user_id', 'id_baiviet']);
 
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('id_baiviet')->references('id_baiviet')->on('baiviet')->onDelete('cascade');
         });
     }
@@ -28,4 +28,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('bai_viet_like');
     }
-}; 
+};

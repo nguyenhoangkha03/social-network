@@ -20,8 +20,8 @@ return new class extends Migration
             $table->timestamp('thoigiancapnhat')->nullable();
             $table->string('trangthaixoa', 255)->nullable();
 
-            $table->foreign('user_id')->references('id_user')->on('users')->onDelete('cascade');
-            $table->foreign('receiver_id')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
+            $table->foreign('receiver_id')->references('user_id')->on('users')->onDelete('cascade');
         });
     }
 

@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $post->tieude ?? 'Bài viết' }} - ChatPost</title>
-    
+
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
+
     <!-- Modern CSS -->
     <style>
         :root {
@@ -50,13 +51,13 @@
             --space-16: 4rem;
             --space-20: 5rem;
         }
-        
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -64,13 +65,13 @@
             color: var(--text-primary);
             line-height: 1.6;
         }
-        
+
         .container {
             max-width: 900px;
             margin: 0 auto;
             padding: var(--space-6);
         }
-        
+
         .post-card {
             background: var(--surface);
             border-radius: var(--radius-2xl);
@@ -78,12 +79,12 @@
             overflow: hidden;
             margin-bottom: var(--space-8);
         }
-        
+
         .post-header {
             padding: var(--space-8);
             border-bottom: 1px solid var(--border-light);
         }
-        
+
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -96,12 +97,12 @@
             border-radius: var(--radius-lg);
             transition: all 0.2s ease;
         }
-        
+
         .back-link:hover {
             background: var(--surface-secondary);
             transform: translateX(-2px);
         }
-        
+
         .post-title {
             font-size: 2.5rem;
             font-weight: 800;
@@ -109,7 +110,7 @@
             color: var(--text-primary);
             margin-bottom: var(--space-4);
         }
-        
+
         .post-meta {
             display: flex;
             align-items: center;
@@ -118,17 +119,17 @@
             font-size: 0.95rem;
             margin-bottom: var(--space-6);
         }
-        
+
         .post-meta a {
             color: var(--primary);
             text-decoration: none;
             font-weight: 500;
         }
-        
+
         .post-meta a:hover {
             text-decoration: underline;
         }
-        
+
         .follow-btn {
             background: none;
             border: 2px solid var(--primary);
@@ -140,17 +141,17 @@
             font-size: 0.875rem;
             transition: all 0.2s ease;
         }
-        
+
         .follow-btn:hover {
             background: var(--primary);
             color: white;
         }
-        
+
         .follow-btn.following {
             background: var(--primary);
             color: white;
         }
-        
+
         .post-cover {
             width: 100%;
             max-height: 500px;
@@ -159,27 +160,29 @@
             margin-bottom: var(--space-6);
             box-shadow: var(--shadow-lg);
         }
-        
+
         .post-content {
             padding: var(--space-8);
         }
-        
+
         .content-text {
             font-size: 1.125rem;
             line-height: 1.8;
             color: var(--text-primary);
             margin-bottom: var(--space-6);
         }
-        
-        .content-text h1, .content-text h2, .content-text h3 {
+
+        .content-text h1,
+        .content-text h2,
+        .content-text h3 {
             margin: var(--space-6) 0 var(--space-4) 0;
             color: var(--text-primary);
         }
-        
+
         .content-text p {
             margin-bottom: var(--space-4);
         }
-        
+
         .content-text img {
             max-width: 100%;
             height: auto;
@@ -187,7 +190,7 @@
             margin: var(--space-4) 0;
             box-shadow: var(--shadow-md);
         }
-        
+
         .post-tags {
             display: flex;
             align-items: center;
@@ -196,7 +199,7 @@
             color: var(--primary);
             font-weight: 500;
         }
-        
+
         .font-controls {
             display: flex;
             align-items: center;
@@ -206,7 +209,7 @@
             background: var(--surface-secondary);
             border-radius: var(--radius-lg);
         }
-        
+
         .font-btn {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -216,11 +219,11 @@
             font-weight: 600;
             transition: all 0.2s ease;
         }
-        
+
         .font-btn:hover {
             background: var(--surface-hover);
         }
-        
+
         .post-actions {
             display: flex;
             align-items: center;
@@ -229,13 +232,13 @@
             border-top: 1px solid var(--border-light);
             background: var(--surface-secondary);
         }
-        
+
         .like-section {
             display: flex;
             align-items: center;
             gap: var(--space-3);
         }
-        
+
         .like-btn {
             background: none;
             border: none;
@@ -245,29 +248,29 @@
             border-radius: var(--radius-lg);
             transition: all 0.2s ease;
         }
-        
+
         .like-btn:hover {
             background: var(--surface-hover);
             transform: scale(1.1);
         }
-        
+
         .like-btn.liked {
             color: var(--error);
         }
-        
+
         .like-count {
             font-weight: 600;
             color: var(--text-primary);
             font-size: 1.125rem;
         }
-        
+
         .comments-section {
             background: var(--surface);
             border-radius: var(--radius-2xl);
             box-shadow: var(--shadow-xl);
             padding: var(--space-8);
         }
-        
+
         .comments-title {
             font-size: 1.5rem;
             font-weight: 700;
@@ -277,7 +280,7 @@
             align-items: center;
             gap: var(--space-3);
         }
-        
+
         .comment-form {
             display: flex;
             gap: var(--space-4);
@@ -286,7 +289,7 @@
             background: var(--surface-secondary);
             border-radius: var(--radius-xl);
         }
-        
+
         .avatar {
             width: 48px;
             height: 48px;
@@ -294,7 +297,7 @@
             object-fit: cover;
             box-shadow: var(--shadow-md);
         }
-        
+
         .comment-input {
             flex: 1;
             padding: var(--space-4);
@@ -307,12 +310,12 @@
             background: var(--surface);
             transition: border-color 0.2s ease;
         }
-        
+
         .comment-input:focus {
             outline: none;
             border-color: var(--primary);
         }
-        
+
         .send-btn {
             padding: var(--space-4) var(--space-6);
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
@@ -326,12 +329,12 @@
             gap: var(--space-2);
             transition: all 0.2s ease;
         }
-        
+
         .send-btn:hover {
             transform: translateY(-1px);
             box-shadow: var(--shadow-lg);
         }
-        
+
         .comment-item {
             background: var(--surface-secondary);
             border-radius: var(--radius-xl);
@@ -340,17 +343,17 @@
             border: 1px solid var(--border);
             transition: all 0.2s ease;
         }
-        
+
         .comment-item:hover {
             box-shadow: var(--shadow-md);
         }
-        
+
         .comment-item.pinned {
             background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
             border: 2px solid var(--primary);
             position: relative;
         }
-        
+
         .pinned-badge {
             position: absolute;
             top: var(--space-4);
@@ -365,42 +368,42 @@
             align-items: center;
             gap: var(--space-1);
         }
-        
+
         .comment-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: var(--space-3);
         }
-        
+
         .comment-author {
             display: flex;
             align-items: center;
             gap: var(--space-3);
         }
-        
+
         .author-name {
             font-weight: 600;
             color: var(--text-primary);
         }
-        
+
         .comment-time {
             color: var(--text-tertiary);
             font-size: 0.875rem;
         }
-        
+
         .comment-content {
             color: var(--text-primary);
             line-height: 1.6;
             margin-bottom: var(--space-4);
         }
-        
+
         .comment-actions {
             display: flex;
             align-items: center;
             gap: var(--space-4);
         }
-        
+
         .reply-btn {
             background: none;
             border: none;
@@ -412,11 +415,11 @@
             border-radius: var(--radius-md);
             transition: all 0.2s ease;
         }
-        
+
         .reply-btn:hover {
             background: var(--surface-hover);
         }
-        
+
         .more-btn {
             background: none;
             border: none;
@@ -427,12 +430,12 @@
             font-size: 1.25rem;
             transition: all 0.2s ease;
         }
-        
+
         .more-btn:hover {
             background: var(--surface-hover);
             color: var(--text-secondary);
         }
-        
+
         .more-menu {
             position: absolute;
             right: 0;
@@ -445,7 +448,7 @@
             min-width: 150px;
             overflow: hidden;
         }
-        
+
         .menu-item {
             width: 100%;
             background: none;
@@ -457,26 +460,26 @@
             color: var(--text-primary);
             transition: background 0.2s ease;
         }
-        
+
         .menu-item:hover {
             background: var(--surface-secondary);
         }
-        
+
         .menu-item.danger {
             color: var(--error);
         }
-        
+
         .menu-item.danger:hover {
             background: rgb(254 242 242);
         }
-        
+
         .replies-list {
             margin-left: var(--space-12);
             margin-top: var(--space-6);
             border-left: 2px solid var(--border);
             padding-left: var(--space-6);
         }
-        
+
         .reply-item {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -484,7 +487,7 @@
             padding: var(--space-4);
             margin-bottom: var(--space-4);
         }
-        
+
         .reply-form {
             display: none;
             margin-top: var(--space-4);
@@ -493,13 +496,13 @@
             border-radius: var(--radius-lg);
             border: 1px solid var(--border);
         }
-        
+
         .reply-form.active {
             display: flex;
             gap: var(--space-3);
             align-items: flex-start;
         }
-        
+
         .reply-input {
             flex: 1;
             padding: var(--space-3);
@@ -509,30 +512,32 @@
             min-height: 80px;
             font-family: inherit;
         }
-        
+
         .reply-input:focus {
             outline: none;
             border-color: var(--primary);
         }
-        
+
         @media (max-width: 768px) {
             .container {
                 padding: var(--space-4);
             }
-            
-            .post-header, .post-content, .comments-section {
+
+            .post-header,
+            .post-content,
+            .comments-section {
                 padding: var(--space-6);
             }
-            
+
             .post-title {
                 font-size: 2rem;
             }
-            
+
             .replies-list {
                 margin-left: var(--space-6);
                 padding-left: var(--space-4);
             }
-            
+
             .comment-form {
                 flex-direction: column;
                 gap: var(--space-3);
@@ -540,6 +545,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Post Card -->
@@ -550,33 +556,33 @@
                     <i class="fas fa-arrow-left"></i>
                     Về trang chủ
                 </a>
-                
+
                 <h1 class="post-title">{{ $post->tieude }}</h1>
-                
+
                 <div class="post-meta">
                     <div style="display: flex; align-items: center; gap: var(--space-2);">
                         <i class="fas fa-user"></i>
-                        <a href="{{ route('user.profile', $post->user->id_user) }}">{{ $post->user->hoten ?? $post->user->username ?? 'Tác giả' }}</a>
+                        <a href="{{ route('user.profile', $post->user->user_id) }}">{{ $post->user->hoten ?? $post->user->username ?? 'Tác giả' }}</a>
                     </div>
-                    
+
                     <div style="display: flex; align-items: center; gap: var(--space-2);">
                         <i class="fas fa-calendar"></i>
                         <span>{{ $post->thoigiandang ? $post->thoigiandang->format('d/m/Y H:i') : '' }}</span>
                     </div>
-                    
-                    @if(isset($user) && $user && $user->id_user != $post->user->id_user)
-                        <button id="followBtn" class="follow-btn {{ $user->isFollowing($post->user->id_user) ? 'following' : '' }}" data-user-id="{{ $post->user->id_user }}" data-following="{{ $user->isFollowing($post->user->id_user) ? 'true' : 'false' }}">
-                            <i class="fas fa-{{ $user->isFollowing($post->user->id_user) ? 'check' : 'plus' }}"></i>
-                            {{ $user->isFollowing($post->user->id_user) ? 'Đang theo dõi' : 'Theo dõi' }}
-                        </button>
+
+                    @if(isset($user) && $user && $user->user_id != $post->user->user_id)
+                    <button id="followBtn" class="follow-btn {{ $user->isFollowing($post->user->user_id) ? 'following' : '' }}" data-user-id="{{ $post->user->user_id }}" data-following="{{ $user->isFollowing($post->user->user_id) ? 'true' : 'false' }}">
+                        <i class="fas fa-{{ $user->isFollowing($post->user->user_id) ? 'check' : 'plus' }}"></i>
+                        {{ $user->isFollowing($post->user->user_id) ? 'Đang theo dõi' : 'Theo dõi' }}
+                    </button>
                     @endif
                 </div>
-                
+
                 @if($post->anh_bia)
-                    <img src="{{ asset($post->anh_bia) }}" alt="Ảnh bìa" class="post-cover">
+                <img src="{{ asset($post->anh_bia) }}" alt="Ảnh bìa" class="post-cover">
                 @endif
             </header>
-            
+
             <!-- Post Content -->
             <div class="post-content">
                 <div class="font-controls">
@@ -591,35 +597,35 @@
                         <i class="fas fa-undo"></i> Reset
                     </button>
                 </div>
-                
+
                 <div class="content-text" id="postContent">{!! $post->noidung !!}</div>
-                
+
                 @if($post->dinhkhem)
-                    <div class="post-tags">
-                        <i class="fas fa-tags"></i>
-                        {{ $post->dinhkhem }}
-                    </div>
+                <div class="post-tags">
+                    <i class="fas fa-tags"></i>
+                    {{ $post->dinhkhem }}
+                </div>
                 @endif
             </div>
-            
+
             <!-- Post Actions -->
             <div class="post-actions">
                 <div class="like-section">
                     <span class="like-count">{{ $post->soluotlike ?? 0 }}</span>
                     @if(isset($user) && $user)
-                        <button id="likeBtn" class="like-btn {{ $userLiked ? 'liked' : '' }}" data-post-id="{{ $post->id_baiviet }}" data-liked="{{ $userLiked ? 'true' : 'false' }}">
-                            <i class="fas fa-heart"></i>
-                        </button>
+                    <button id="likeBtn" class="like-btn {{ $userLiked ? 'liked' : '' }}" data-post-id="{{ $post->id_baiviet }}" data-liked="{{ $userLiked ? 'true' : 'false' }}">
+                        <i class="fas fa-heart"></i>
+                    </button>
                     @else
-                        <i class="fas fa-heart" style="color: var(--text-tertiary); font-size: 1.5rem;"></i>
+                    <i class="fas fa-heart" style="color: var(--text-tertiary); font-size: 1.5rem;"></i>
                     @endif
                 </div>
-                
+
                 <div style="display: flex; align-items: center; gap: var(--space-2); color: var(--text-secondary);">
                     <i class="fas fa-eye"></i>
                     <span>{{ number_format(rand(100, 5000)) }} lượt xem</span>
                 </div>
-                
+
                 <div style="display: flex; align-items: center; gap: var(--space-2); color: var(--text-secondary);">
                     <i class="fas fa-share"></i>
                     <button style="background: none; border: none; color: inherit; cursor: pointer; font-weight: 500;" onclick="sharePost()">
@@ -636,157 +642,157 @@
                 Bình luận ({{ count($comments) }})
             </h2>
             @if(isset($user) && $user)
-                <form class="comment-form" id="commentForm">
-                    <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=2563eb&color=fff&size=48" alt="Avatar" class="avatar">
-                    <textarea id="commentContent" class="comment-input" placeholder="Viết bình luận của bạn..."></textarea>
-                    <button type="button" id="sendCommentBtn" class="send-btn">
-                        <i class="fas fa-paper-plane"></i>
-                        Gửi
-                    </button>
-                </form>
+            <form class="comment-form" id="commentForm">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=2563eb&color=fff&size=48" alt="Avatar" class="avatar">
+                <textarea id="commentContent" class="comment-input" placeholder="Viết bình luận của bạn..."></textarea>
+                <button type="button" id="sendCommentBtn" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    Gửi
+                </button>
+            </form>
             @else
-                <div style="text-align: center; padding: var(--space-8); background: var(--surface-secondary); border-radius: var(--radius-xl); margin-bottom: var(--space-8);">
-                    <i class="fas fa-lock" style="font-size: 2rem; color: var(--text-tertiary); margin-bottom: var(--space-4);"></i>
-                    <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">Bạn cần đăng nhập để tham gia bình luận</p>
-                    <a href="{{ route('login') }}" style="display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-6); background: var(--primary); color: white; text-decoration: none; border-radius: var(--radius-xl); font-weight: 600; transition: all 0.2s ease;">
-                        <i class="fas fa-sign-in-alt"></i>
-                        Đăng nhập ngay
-                    </a>
-                </div>
+            <div style="text-align: center; padding: var(--space-8); background: var(--surface-secondary); border-radius: var(--radius-xl); margin-bottom: var(--space-8);">
+                <i class="fas fa-lock" style="font-size: 2rem; color: var(--text-tertiary); margin-bottom: var(--space-4);"></i>
+                <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">Bạn cần đăng nhập để tham gia bình luận</p>
+                <a href="{{ route('login') }}" style="display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-6); background: var(--primary); color: white; text-decoration: none; border-radius: var(--radius-xl); font-weight: 600; transition: all 0.2s ease;">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Đăng nhập ngay
+                </a>
+            </div>
             @endif
             <div id="commentsList">
                 {{-- Pinned Comment --}}
                 @if($post->pinnedComment)
-                    <div class="comment-item pinned" data-comment-id="{{ $post->pinnedComment->id_binhluan }}">
-                        <div class="pinned-badge">
-                            <i class="fas fa-thumbtack"></i>
-                            Được ghim
-                        </div>
-                        
-                        <div class="comment-header">
-                            <div class="comment-author">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($post->pinnedComment->user->hoten ?? $post->pinnedComment->user->username ?? 'U') }}&background=2563eb&color=fff&size=40" alt="Avatar" class="avatar" style="width: 40px; height: 40px;">
-                                <div>
-                                    <div class="author-name">{{ $post->pinnedComment->user->hoten ?? $post->pinnedComment->user->username ?? 'Tác giả' }}</div>
-                                    <div class="comment-time">{{ $post->pinnedComment->thoigiantao ? $post->pinnedComment->thoigiantao->diffForHumans() : '' }}</div>
-                                </div>
+                <div class="comment-item pinned" data-comment-id="{{ $post->pinnedComment->id_binhluan }}">
+                    <div class="pinned-badge">
+                        <i class="fas fa-thumbtack"></i>
+                        Được ghim
+                    </div>
+
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($post->pinnedComment->user->hoten ?? $post->pinnedComment->user->username ?? 'U') }}&background=2563eb&color=fff&size=40" alt="Avatar" class="avatar" style="width: 40px; height: 40px;">
+                            <div>
+                                <div class="author-name">{{ $post->pinnedComment->user->hoten ?? $post->pinnedComment->user->username ?? 'Tác giả' }}</div>
+                                <div class="comment-time">{{ $post->pinnedComment->thoigiantao ? $post->pinnedComment->thoigiantao->diffForHumans() : '' }}</div>
                             </div>
                         </div>
-                        
-                        <div class="comment-content">{{ $post->pinnedComment->noidung }}</div>
                     </div>
+
+                    <div class="comment-content">{{ $post->pinnedComment->noidung }}</div>
+                </div>
                 @endif
                 @foreach($comments as $comment)
-                    <div class="comment-item" data-comment-id="{{ $comment->id_binhluan }}">
-                        <div class="comment-header">
-                            <div class="comment-author">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($comment->user->hoten ?? $comment->user->username ?? 'U') }}&background=64748b&color=fff&size=40" alt="Avatar" class="avatar" style="width: 40px; height: 40px;">
-                                <div>
-                                    <div class="author-name">{{ $comment->user->hoten ?? $comment->user->username ?? 'Tác giả' }}</div>
-                                    <div class="comment-time">{{ $comment->thoigiantao ? $comment->thoigiantao->diffForHumans() : '' }}</div>
-                                </div>
-                            </div>
-                            
-                            <div style="position: relative;">
-                                <button class="more-btn" data-comment-id="{{ $comment->id_binhluan }}">
-                                    <i class="fas fa-ellipsis-h"></i>
-                                </button>
-                                <div class="more-menu" id="menu-{{ $comment->id_binhluan }}" style="display: none;">
-                                    <button class="menu-item">Chỉnh sửa</button>
-                                    <button class="menu-item danger">Xóa</button>
-                                    <button class="menu-item">Ghim</button>
-                                </div>
+                <div class="comment-item" data-comment-id="{{ $comment->id_binhluan }}">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <img src="https://ui-avatars.com/api/?name={{ urlencode($comment->user->hoten ?? $comment->user->username ?? 'U') }}&background=64748b&color=fff&size=40" alt="Avatar" class="avatar" style="width: 40px; height: 40px;">
+                            <div>
+                                <div class="author-name">{{ $comment->user->hoten ?? $comment->user->username ?? 'Tác giả' }}</div>
+                                <div class="comment-time">{{ $comment->thoigiantao ? $comment->thoigiantao->diffForHumans() : '' }}</div>
                             </div>
                         </div>
-                        
-                        <div class="comment-content">{{ $comment->noidung }}</div>
-                        
-                        <div class="comment-actions">
-                            <button class="reply-btn" data-comment-id="{{ $comment->id_binhluan }}">
-                                <i class="fas fa-reply"></i>
-                                Trả lời
+
+                        <div style="position: relative;">
+                            <button class="more-btn" data-comment-id="{{ $comment->id_binhluan }}">
+                                <i class="fas fa-ellipsis-h"></i>
                             </button>
-                        </div>
-                        @if(isset($user) && $user)
-                            <form class="reply-form" data-parent-id="{{ $comment->id_binhluan }}">
-                                <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=2563eb&color=fff&size=32" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%;">
-                                <textarea class="reply-input" placeholder="Trả lời bình luận này..."></textarea>
-                                <button type="button" class="send-btn sendReplyBtn" data-parent-id="{{ $comment->id_binhluan }}" style="padding: var(--space-3) var(--space-4); font-size: 0.875rem;">
-                                    <i class="fas fa-paper-plane"></i>
-                                    Gửi
-                                </button>
-                            </form>
-                        @endif
-                        <!-- Replies -->
-                        @if($comment->replies && $comment->replies->count())
-                            <div class="replies-list">
-                                @foreach($comment->replies as $reply)
-                                    <div class="reply-item" data-comment-id="{{ $reply->id_binhluan }}">
-                                        <div class="comment-header">
-                                            <div class="comment-author">
-                                                <img src="https://ui-avatars.com/api/?name={{ urlencode($reply->user->hoten ?? $reply->user->username ?? 'U') }}&background=06b6d4&color=fff&size=36" alt="Avatar" style="width: 36px; height: 36px; border-radius: 50%;">
-                                                <div>
-                                                    <div class="author-name">{{ $reply->user->hoten ?? $reply->user->username ?? 'Tác giả' }}</div>
-                                                    <div class="comment-time">{{ $reply->thoigiantao ? $reply->thoigiantao->diffForHumans() : '' }}</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div style="position: relative;">
-                                                <button class="more-btn" data-comment-id="{{ $reply->id_binhluan }}">
-                                                    <i class="fas fa-ellipsis-h"></i>
-                                                </button>
-                                                <div class="more-menu" id="menu-{{ $reply->id_binhluan }}" style="display: none;">
-                                                    <button class="menu-item">Chỉnh sửa</button>
-                                                    <button class="menu-item danger">Xóa</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="comment-content">{{ $reply->noidung }}</div>
-                                        
-                                        <div class="comment-actions">
-                                            <button class="reply-btn" data-comment-id="{{ $comment->id_binhluan }}">
-                                                <i class="fas fa-reply"></i>
-                                                Trả lời
-                                            </button>
-                                        </div>
-                                    </div>
-                                @endforeach
+                            <div class="more-menu" id="menu-{{ $comment->id_binhluan }}" style="display: none;">
+                                <button class="menu-item">Chỉnh sửa</button>
+                                <button class="menu-item danger">Xóa</button>
+                                <button class="menu-item">Ghim</button>
                             </div>
-                        @endif
+                        </div>
                     </div>
+
+                    <div class="comment-content">{{ $comment->noidung }}</div>
+
+                    <div class="comment-actions">
+                        <button class="reply-btn" data-comment-id="{{ $comment->id_binhluan }}">
+                            <i class="fas fa-reply"></i>
+                            Trả lời
+                        </button>
+                    </div>
+                    @if(isset($user) && $user)
+                    <form class="reply-form" data-parent-id="{{ $comment->id_binhluan }}">
+                        <img src="https://ui-avatars.com/api/?name={{ urlencode($user->hoten ?? $user->username ?? 'U') }}&background=2563eb&color=fff&size=32" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%;">
+                        <textarea class="reply-input" placeholder="Trả lời bình luận này..."></textarea>
+                        <button type="button" class="send-btn sendReplyBtn" data-parent-id="{{ $comment->id_binhluan }}" style="padding: var(--space-3) var(--space-4); font-size: 0.875rem;">
+                            <i class="fas fa-paper-plane"></i>
+                            Gửi
+                        </button>
+                    </form>
+                    @endif
+                    <!-- Replies -->
+                    @if($comment->replies && $comment->replies->count())
+                    <div class="replies-list">
+                        @foreach($comment->replies as $reply)
+                        <div class="reply-item" data-comment-id="{{ $reply->id_binhluan }}">
+                            <div class="comment-header">
+                                <div class="comment-author">
+                                    <img src="https://ui-avatars.com/api/?name={{ urlencode($reply->user->hoten ?? $reply->user->username ?? 'U') }}&background=06b6d4&color=fff&size=36" alt="Avatar" style="width: 36px; height: 36px; border-radius: 50%;">
+                                    <div>
+                                        <div class="author-name">{{ $reply->user->hoten ?? $reply->user->username ?? 'Tác giả' }}</div>
+                                        <div class="comment-time">{{ $reply->thoigiantao ? $reply->thoigiantao->diffForHumans() : '' }}</div>
+                                    </div>
+                                </div>
+
+                                <div style="position: relative;">
+                                    <button class="more-btn" data-comment-id="{{ $reply->id_binhluan }}">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    <div class="more-menu" id="menu-{{ $reply->id_binhluan }}" style="display: none;">
+                                        <button class="menu-item">Chỉnh sửa</button>
+                                        <button class="menu-item danger">Xóa</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="comment-content">{{ $reply->noidung }}</div>
+
+                            <div class="comment-actions">
+                                <button class="reply-btn" data-comment-id="{{ $comment->id_binhluan }}">
+                                    <i class="fas fa-reply"></i>
+                                    Trả lời
+                                </button>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
                 @endforeach
             </div>
-        </div>
+    </div>
     </div>
     @if(isset($user) && $user)
     <script>
         document.getElementById('likeBtn').addEventListener('click', function() {
             const postId = this.dataset.postId;
             const isLiked = this.dataset.liked === 'true';
-            
+
             fetch(`/post/${postId}/like`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Cập nhật UI
-                    this.dataset.liked = data.isLiked.toString();
-                    this.style.color = data.isLiked ? '#e74c3c' : '#ccc';
-                    
-                    // Cập nhật số lượt like
-                    document.querySelector('.like-count').textContent = data.likeCount;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Có lỗi xảy ra khi like bài viết');
-            });
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Cập nhật UI
+                        this.dataset.liked = data.isLiked.toString();
+                        this.style.color = data.isLiked ? '#e74c3c' : '#ccc';
+
+                        // Cập nhật số lượt like
+                        document.querySelector('.like-count').textContent = data.likeCount;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi like bài viết');
+                });
         });
 
         // Gửi bình luận cha
@@ -797,22 +803,24 @@
                 return;
             }
             fetch('/post/{{ $post->id_baiviet }}/comment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ noidung: content })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.error || 'Có lỗi xảy ra!');
-                }
-            })
-            .catch(() => alert('Có lỗi xảy ra!'));
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        noidung: content
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.error || 'Có lỗi xảy ra!');
+                    }
+                })
+                .catch(() => alert('Có lỗi xảy ra!'));
         });
 
         // Gửi reply (bình luận con)
@@ -827,22 +835,25 @@
                     return;
                 }
                 fetch('/post/{{ $post->id_baiviet }}/comment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ noidung: content, parent_id: parentId })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.error || 'Có lỗi xảy ra!');
-                    }
-                })
-                .catch(() => alert('Có lỗi xảy ra!'));
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            noidung: content,
+                            parent_id: parentId
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.error || 'Có lỗi xảy ra!');
+                        }
+                    })
+                    .catch(() => alert('Có lỗi xảy ra!'));
             });
         });
 
@@ -858,32 +869,32 @@
             });
         });
     </script>
-   
-    @if(isset($user) && $user && $user->id_user != $post->user->id_user)
+
+    @if(isset($user) && $user && $user->user_id != $post->user->user_id)
     <script>
         document.getElementById('followBtn').addEventListener('click', function() {
             const userId = this.dataset.userId;
             const isFollowing = this.dataset.following === 'true';
-            
+
             fetch(`/user/${userId}/follow`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Cập nhật UI
-                    this.dataset.following = data.isFollowing.toString();
-                    this.textContent = data.isFollowing ? 'Đang theo dõi' : 'Theo dõi';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Có lỗi xảy ra khi thực hiện thao tác');
-            });
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Cập nhật UI
+                        this.dataset.following = data.isFollowing.toString();
+                        this.textContent = data.isFollowing ? 'Đang theo dõi' : 'Theo dõi';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi thực hiện thao tác');
+                });
         });
     </script>
     @endif
@@ -914,21 +925,21 @@
                 const commentId = menu.id.replace('menu-', '');
                 if (confirm('Bạn có chắc muốn xóa bình luận này?')) {
                     fetch('/comment/' + commentId, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        } else {
-                            alert(data.error || 'Có lỗi xảy ra!');
-                        }
-                    })
-                    .catch(() => alert('Có lỗi xảy ra!'));
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            } else {
+                                alert(data.error || 'Có lỗi xảy ra!');
+                            }
+                        })
+                        .catch(() => alert('Có lỗi xảy ra!'));
                 }
             });
         });
@@ -983,30 +994,39 @@
                 // Lưu
                 saveBtn.onclick = function() {
                     const newContent = textarea.value.trim();
-                    if (!newContent) { alert('Nội dung không được để trống!'); return; }
+                    if (!newContent) {
+                        alert('Nội dung không được để trống!');
+                        return;
+                    }
                     fetch('/comment/' + commentId, {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ noidung: newContent })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            contentDiv.textContent = data.noidung;
-                            textarea.remove(); saveBtn.remove(); cancelBtn.remove();
-                            contentDiv.style.display = '';
-                        } else {
-                            alert(data.error || 'Có lỗi xảy ra!');
-                        }
-                    })
-                    .catch(() => alert('Có lỗi xảy ra!'));
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                noidung: newContent
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                contentDiv.textContent = data.noidung;
+                                textarea.remove();
+                                saveBtn.remove();
+                                cancelBtn.remove();
+                                contentDiv.style.display = '';
+                            } else {
+                                alert(data.error || 'Có lỗi xảy ra!');
+                            }
+                        })
+                        .catch(() => alert('Có lỗi xảy ra!'));
                 };
                 // Hủy
                 cancelBtn.onclick = function() {
-                    textarea.remove(); saveBtn.remove(); cancelBtn.remove();
+                    textarea.remove();
+                    saveBtn.remove();
+                    cancelBtn.remove();
                     contentDiv.style.display = '';
                 };
             });
@@ -1025,40 +1045,41 @@
                     return;
                 }
                 // Kiểm tra quyền (chỉ chủ bài viết)
-                @if(!isset($user) || $user->id_user != $post->user->id_user)
-                    alert('Chỉ chủ bài viết mới được ghim!');
-                    return;
+                @if(!isset($user) || $user - > user_id != $post - > user - > user_id)
+                alert('Chỉ chủ bài viết mới được ghim!');
+                return;
                 @endif
                 fetch('/comment/' + commentId + '/pin', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.error || 'Có lỗi xảy ra!');
-                    }
-                })
-                .catch(() => alert('Có lỗi xảy ra!'));
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert(data.error || 'Có lỗi xảy ra!');
+                        }
+                    })
+                    .catch(() => alert('Có lỗi xảy ra!'));
             });
         });
     </script>
 </body>
 <script>
-function changeFontSize(delta) {
-    const content = document.querySelector('.post-content');
-    if (!content) return;
-    let current = window.getComputedStyle(content).fontSize;
-    let size = parseFloat(current);
-    size += delta * 2;
-    if (size < 12) size = 12;
-    if (size > 48) size = 48;
-    content.style.fontSize = size + 'px';
-}
+    function changeFontSize(delta) {
+        const content = document.querySelector('.post-content');
+        if (!content) return;
+        let current = window.getComputedStyle(content).fontSize;
+        let size = parseFloat(current);
+        size += delta * 2;
+        if (size < 12) size = 12;
+        if (size > 48) size = 48;
+        content.style.fontSize = size + 'px';
+    }
 </script>
-</html> 
+
+</html>

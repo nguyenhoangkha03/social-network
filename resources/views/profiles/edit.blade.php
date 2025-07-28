@@ -500,7 +500,7 @@
                 </div>
                 @endif
 
-                <form id="profileForm" action="{{ route('profile.update', $user->id_user) }}" method="POST" enctype="multipart/form-data">
+                <form id="profileForm" action="{{ route('profile.update', $user->user_id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -624,7 +624,7 @@
 
                     <!-- Form Actions -->
                     <div class="form-actions">
-                        <a href="{{ route('user.profile', $user->id_user) }}" class="btn btn-secondary">
+                        <a href="{{ route('user.profile', $user->user_id) }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i>
                             Hủy bỏ
                         </a>

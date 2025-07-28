@@ -14,12 +14,12 @@ class Follow extends Model
     // Relationship với User (follower)
     public function follower()
     {
-        return $this->belongsTo(User::class, 'follower_id', 'id_user');
+        return $this->belongsTo(User::class, 'follower_id', 'user_id');
     }
 
     // Relationship với User (following)
     public function following()
     {
-        return $this->belongsTo(User::class, 'following_id', 'id_user');
+        return $this->belongsTo(User::class, 'following_id', 'user_id');
     }
-} 
+}

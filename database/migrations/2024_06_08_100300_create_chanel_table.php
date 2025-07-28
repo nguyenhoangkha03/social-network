@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('thoigiancapnhat')->nullable();
             $table->integer('loaikenh')->nullable();
 
-            $table->foreign('nguoisohuu')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('nguoisohuu')->references('user_id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -32,4 +32,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('chanel');
     }
-}; 
+};

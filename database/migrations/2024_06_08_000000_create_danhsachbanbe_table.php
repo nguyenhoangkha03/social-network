@@ -15,8 +15,8 @@ return new class extends Migration
             $table->unsignedInteger('user_id_1');
             $table->unsignedInteger('user_id_2');
             $table->primary(['user_id_1', 'user_id_2']);
-            $table->foreign('user_id_1')->references('id_user')->on('users')->onDelete('cascade');
-            $table->foreign('user_id_2')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id_1')->references('user_id')->on('users')->onDelete('cascade');
+            $table->foreign('user_id_2')->references('user_id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -27,4 +27,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('danhsachbanbe');
     }
-}; 
+};

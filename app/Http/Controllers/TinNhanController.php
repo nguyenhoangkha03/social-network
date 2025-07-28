@@ -17,7 +17,7 @@ class TinNhanController extends Controller
         }
 
         $request->validate([
-            'receiver_id' => 'required|exists:users,id_user',
+            'receiver_id' => 'required|exists:users,user_id',
             'noidung' => 'required|string|min:1',
             'hinhanh' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120'
         ]);
@@ -48,7 +48,7 @@ class TinNhanController extends Controller
 
         // Tạo tin nhắn mới
         $tinNhan = TinNhan::create([
-            'id_user' => $senderId,
+            'user_id' => $senderId,
             'receiver_id' => $request->receiver_id,
             'noidung' => $messageContent,
             'image_path' => $imagePath,
@@ -72,18 +72,18 @@ class TinNhanController extends Controller
         $myId = Session::get('user_id');
 
         $messages = TinNhan::where(function ($query) use ($myId, $friendId) {
-            $query->where('id_user', $myId)->where('receiver_id', $friendId);
+            $query->where('user_id', $myId)->where('receiver_id', $friendId);
         })
             ->orWhere(function ($query) use ($myId, $friendId) {
-                $query->where('id_user', $friendId)->where('receiver_id', $myId);
+                $query->where('user_id', $friendId)->where('receiver_id', $myId);
             })
             ->orderBy('thoigiantao', 'asc')
             ->get()
             ->map(function ($msg) use ($myId) {
                 return [
                     'id' => $msg->id_tinnhan,
-                    'me' => $msg->id_user == $myId,
-                    'user_id' => $msg->id_user,
+                    'me' => $msg->user_id == $myId,
+                    'user_id' => $msg->user_id,
                     'noidung' => $msg->noidung,
                     'image_path' => $msg->image_path,
                     'thoigiantao' => $msg->thoigiantao,
@@ -110,9 +110,9 @@ class TinNhanController extends Controller
             $query->where('receiver_id', $currentUserId);
         })
             ->orWhereHas('receivedMessages', function ($query) use ($currentUserId) {
-                $query->where('id_user', $currentUserId);
+                $query->where('user_id', $currentUserId);
             })
-            ->where('id_user', '!=', $currentUserId)
+            ->where('user_id', '!=', $currentUserId)
             ->get();
 
         return response()->json(['users' => $users]);

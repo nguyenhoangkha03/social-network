@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('trangthaiuser', function (Blueprint $table) {
-            $table->unsignedInteger('id_user')->primary();
+            $table->unsignedInteger('user_id')->primary();
             $table->integer('id_trangthai')->nullable();
             $table->string('ip_address', 255)->nullable();
             $table->text('user_agent')->nullable();
             $table->text('payload')->nullable();
             $table->integer('last_activity')->nullable();
 
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -30,4 +30,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('trangthaiuser');
     }
-}; 
+};

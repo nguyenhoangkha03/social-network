@@ -50,7 +50,7 @@ function renderFriendList() {
         const li = document.createElement("li");
         li.className =
             "friend-item" +
-            (selectedFriend && f.id_user === selectedFriend.id_user
+            (selectedFriend && f.user_id === selectedFriend.user_id
                 ? " selected"
                 : "");
         li.innerHTML = `
@@ -100,7 +100,7 @@ async function selectFriend(f) {
     chatHeader.textContent = f.hoten;
     renderFriendList();
     chatMessages.innerHTML = "<div>Đang tải tin nhắn...</div>";
-    const messages = await fetchMessages(f.id_user);
+    const messages = await fetchMessages(f.user_id);
     renderMessages(messages);
 }
 
@@ -114,12 +114,12 @@ chatForm.addEventListener("submit", async function (e) {
     if (!selectedFriend) return;
     chatInput.value = "";
     if (imageInput) imageInput.value = "";
-    const ok = await sendMessage(selectedFriend.id_user, text, imageFile);
+    const ok = await sendMessage(selectedFriend.user_id, text, imageFile);
     if (!ok) {
         alert("Không gửi được tin nhắn. Vui lòng thử lại!");
         return;
     }
-    const messages = await fetchMessages(selectedFriend.id_user);
+    const messages = await fetchMessages(selectedFriend.user_id);
     renderMessages(messages);
 });
 

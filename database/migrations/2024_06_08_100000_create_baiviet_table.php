@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('baiviet', function (Blueprint $table) {
             $table->char('id_baiviet', 10)->primary();
-            $table->unsignedInteger('id_user');
+            $table->unsignedInteger('user_id');
             $table->string('tieude', 255);
             $table->text('mota')->nullable();
             $table->text('noidung')->nullable();
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamp('thoigiancapnhat')->nullable();
             $table->integer('soluotlike')->default(0);
 
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -35,4 +35,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('baiviet');
     }
-}; 
+};

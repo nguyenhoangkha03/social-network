@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\CallController;
+use App\Http\Controllers\SignalingController;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use App\Models\BaiViet;
@@ -63,15 +65,15 @@ Route::get('/friends/list', function (\Illuminate\Http\Request $request) {
         $currentUser = session()->has('user_id') ? \App\Models\User::find(session('user_id')) : null;
         $friends = [];
         if ($currentUser) {
-            $friendIds = \App\Models\DanhSachBanBe::where('user_id_1', $currentUser->id_user)
-                ->orWhere('user_id_2', $currentUser->id_user)
+            $friendIds = \App\Models\DanhSachBanBe::where('user_id_1', $currentUser->user_id)
+                ->orWhere('user_id_2', $currentUser->user_id)
                 ->get()
                 ->map(function ($row) use ($currentUser) {
-                    return $row->user_id_1 == $currentUser->id_user ? $row->user_id_2 : $row->user_id_1;
+                    return $row->user_id_1 == $currentUser->user_id ? $row->user_id_2 : $row->user_id_1;
                 })->toArray();
-            $friends = \App\Models\User::whereIn('id_user', $friendIds)->get()->map(function ($u) {
+            $friends = \App\Models\User::whereIn('user_id', $friendIds)->get()->map(function ($u) {
                 return [
-                    'id_user' => $u->id_user,
+                    'user_id' => $u->user_id,
                     'hoten' => $u->hoten,
                     'avatar' => $u->hinhanh ? 'data:image/jpeg;base64,' . base64_encode($u->hinhanh) : null,
                 ];
@@ -127,16 +129,16 @@ Route::get('/api/friends', function () {
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        $friendIds = \App\Models\DanhSachBanBe::where('user_id_1', $currentUser->id_user)
-            ->orWhere('user_id_2', $currentUser->id_user)
+        $friendIds = \App\Models\DanhSachBanBe::where('user_id_1', $currentUser->user_id)
+            ->orWhere('user_id_2', $currentUser->user_id)
             ->get()
             ->map(function ($row) use ($currentUser) {
-                return $row->user_id_1 == $currentUser->id_user ? $row->user_id_2 : $row->user_id_1;
+                return $row->user_id_1 == $currentUser->user_id ? $row->user_id_2 : $row->user_id_1;
             })->toArray();
 
-        $friends = \App\Models\User::whereIn('id_user', $friendIds)->get()->map(function ($u) {
+        $friends = \App\Models\User::whereIn('user_id', $friendIds)->get()->map(function ($u) {
             return [
-                'id_user' => $u->id_user,
+                'user_id' => $u->user_id,
                 'hoten' => $u->hoten,
                 'avatar' => $u->hinhanh ? 'data:image/jpeg;base64,' . base64_encode($u->hinhanh) : null,
             ];
@@ -157,17 +159,17 @@ Route::get('/api/chat/messages/{friend_id}', function ($friend_id) {
 
         $userId = session('user_id');
         $messages = \App\Models\TinNhan::where(function ($q) use ($userId, $friend_id) {
-            $q->where('id_user', $userId)->where('receiver_id', $friend_id);
+            $q->where('user_id', $userId)->where('receiver_id', $friend_id);
         })->orWhere(function ($q) use ($userId, $friend_id) {
-            $q->where('id_user', $friend_id)->where('receiver_id', $userId);
+            $q->where('user_id', $friend_id)->where('receiver_id', $userId);
         })
             ->orderBy('thoigiantao')
             ->get()
             ->map(function ($m) use ($userId) {
                 return [
                     'id' => $m->id_tinnhan,
-                    'me' => $m->id_user == $userId,
-                    'user_id' => $m->id_user,
+                    'me' => $m->user_id == $userId,
+                    'user_id' => $m->user_id,
                     'noidung' => $m->noidung,
                     'hinhanh' => $m->hinhanh,
                     'thoigiantao' => $m->thoigiantao,
@@ -188,7 +190,7 @@ Route::post('/api/chat/send', function (Request $request) {
         }
 
         $request->validate([
-            'receiver_id' => 'required|integer|exists:users,id_user',
+            'receiver_id' => 'required|integer|exists:users,user_id',
             'noidung' => 'required|string',
             'hinhanh' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120'
         ]);
@@ -201,10 +203,10 @@ Route::post('/api/chat/send', function (Request $request) {
         $chanel = DB::table('chanel')
             ->join('user_chanel as uc1', 'chanel.id_chanel', '=', 'uc1.id_chanel')
             ->join('user_chanel as uc2', 'chanel.id_chanel', '=', 'uc2.id_chanel')
-            ->where('uc1.id_user', $userIds[0])
-            ->where('uc2.id_user', $userIds[1])
+            ->where('uc1.user_id', $userIds[0])
+            ->where('uc2.user_id', $userIds[1])
             ->groupBy('chanel.id_chanel')
-            ->havingRaw('COUNT(DISTINCT uc1.id_user) = 1 AND COUNT(DISTINCT uc2.id_user) = 1')
+            ->havingRaw('COUNT(DISTINCT uc1.user_id) = 1 AND COUNT(DISTINCT uc2.user_id) = 1')
             ->select('chanel.id_chanel')
             ->first();
         if ($chanel) {
@@ -218,8 +220,8 @@ Route::post('/api/chat/send', function (Request $request) {
                 'loaikenh' => 0,
             ]);
             DB::table('user_chanel')->insert([
-                ['id_user' => $id_nguoi_gui, 'id_chanel' => $id_chanel],
-                ['id_user' => $receiver_id, 'id_chanel' => $id_chanel],
+                ['user_id' => $id_nguoi_gui, 'id_chanel' => $id_chanel],
+                ['user_id' => $receiver_id, 'id_chanel' => $id_chanel],
             ]);
         }
 
@@ -234,7 +236,7 @@ Route::post('/api/chat/send', function (Request $request) {
                 $file->move(public_path('uploads/messages'), $fileName);
                 $imagePath = 'uploads/messages/' . $fileName;
                 $tinNhan = \App\Models\TinNhan::create([
-                    'id_user' => $id_nguoi_gui,
+                    'user_id' => $id_nguoi_gui,
                     // 'id_chanel' => $id_chanel,
                     'receiver_id' => $receiver_id,
                     'noidung' => $messageContent,
@@ -246,7 +248,7 @@ Route::post('/api/chat/send', function (Request $request) {
             }
         } else {
             $tinNhan = \App\Models\TinNhan::create([
-                'id_user' => $id_nguoi_gui,
+                'user_id' => $id_nguoi_gui,
                 // 'id_chanel' => $id_chanel,
                 'receiver_id' => $receiver_id,
                 'noidung' => $messageContent,
@@ -356,3 +358,55 @@ Route::post('/admin-delete-banner', function (Request $request) {
     Storage::disk('local')->put($albumFile, json_encode($album));
     return response()->json(['success' => true]);
 });
+
+// Call routes
+Route::post('/call/initiate', [CallController::class, 'initiateCall'])->name('call.initiate');
+Route::post('/call/answer', [CallController::class, 'answerCall'])->name('call.answer');
+Route::post('/call/end', [CallController::class, 'endCall'])->name('call.end');
+Route::get('/call/status/{callId}', [CallController::class, 'getCallStatus'])->name('call.status');
+Route::get('/call/{callId}', [CallController::class, 'callPage'])->name('call.page');
+Route::get('/call-test', function () {
+    return view('calls.test');
+})->name('call.test');
+
+// Signaling routes for WebRTC
+Route::post('/signaling/send', [SignalingController::class, 'sendSignal'])->name('signaling.send');
+Route::get('/signaling/get/{callId}', [SignalingController::class, 'getSignals'])->name('signaling.get');
+Route::get('/signaling/poll/{callId}', [SignalingController::class, 'pollSignals'])->name('signaling.poll');
+
+// Debug routes
+Route::get('/debug-db', function () {
+    try {
+        $userCount = \App\Models\User::count();
+        $friendCount = \App\Models\DanhSachBanBe::count();
+
+        // Test call tables if they exist
+        $callCount = 0;
+        $signalCount = 0;
+        try {
+            $callCount = \App\Models\Call::count();
+            $signalCount = \App\Models\CallSignal::count();
+        } catch (Exception $e) {
+            // Tables don't exist yet
+        }
+
+        return response()->json([
+            'database_connection' => 'OK',
+            'users' => $userCount,
+            'friends' => $friendCount,
+            'calls' => $callCount,
+            'signals' => $signalCount,
+            'tables_status' => [
+                'users' => \Schema::hasTable('users'),
+                'danhsachbanbe' => \Schema::hasTable('danhsachbanbe'),
+                'calls' => \Schema::hasTable('calls'),
+                'call_signals' => \Schema::hasTable('call_signals')
+            ]
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'database_connection' => 'FAILED'
+        ], 500);
+    }
+})->name('debug.db');

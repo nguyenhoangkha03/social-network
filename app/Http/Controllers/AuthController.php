@@ -72,7 +72,7 @@ class AuthController extends Controller
             ->first();
         if ($user && Hash::check($request->password, $user->password)) {
             // Đăng nhập thành công
-            session(['user_id' => $user->id_user]);
+            session(['user_id' => $user->user_id]);
             // Kiểm tra nếu là admin
             $admins = config('admins.accounts');
             if (isset($admins[$user->username]) && $admins[$user->username] === $request->password) {

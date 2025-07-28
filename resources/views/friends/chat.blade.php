@@ -672,10 +672,10 @@
                 </div>
 
                 <div class="chat-actions">
-                    <button class="chat-action-btn" title="Gọi điện">
+                    <button class="chat-action-btn" title="Gọi điện" id="voiceCallBtn" onclick="initiateCallFromChat('voice')">
                         <i class="fas fa-phone"></i>
                     </button>
-                    <button class="chat-action-btn" title="Video call">
+                    <button class="chat-action-btn" title="Video call" id="videoCallBtn" onclick="initiateCallFromChat('video')">
                         <i class="fas fa-video"></i>
                     </button>
                     <button class="chat-action-btn" title="Thông tin">
@@ -728,7 +728,7 @@
 
             // Check if we have a specific friend to chat with
             const urlParams = new URLSearchParams(window.location.search);
-            const friendId = urlParams.get('friend_id') || '{{ $friend->id_user ?? "" }}';
+            const friendId = urlParams.get('friend_id') || '{{ $friend->user_id ?? "" }}';
             if (friendId) {
                 setTimeout(() => selectFriend(friendId), 1000);
             }
@@ -801,7 +801,7 @@
             }
 
             friendsList.innerHTML = friends.map(friend => `
-                <div class="friend-item" onclick="selectFriend(${friend.id_user})" data-friend-id="${friend.id_user}">
+                <div class="friend-item" onclick="selectFriend(${friend.user_id})" data-friend-id="${friend.user_id}">
                     <div class="friend-avatar">
                         ${friend.avatar ? 
                             `<img src="${friend.avatar}" alt="${friend.hoten}">` : 
@@ -856,6 +856,9 @@
         // Load chat data
         async function loadChatData(friendId) {
             try {
+                // Set current chat user for call functionality
+                currentChatUserId = friendId;
+
                 // Load friend info (you might want to create an API endpoint for this)
                 const friendElement = document.querySelector(`[data-friend-id="${friendId}"]`);
                 if (friendElement) {
@@ -878,6 +881,13 @@
 
                 if (data.messages) {
                     displayMessages(data.messages);
+
+                    // Set last message time and start polling
+                    if (data.messages.length > 0) {
+                        const latestMessage = data.messages[data.messages.length - 1];
+                        lastMessageTime = new Date(latestMessage.thoigiantao).getTime();
+                    }
+                    startMessagePolling();
                 }
             } catch (error) {
                 console.error('Error loading chat data:', error);
@@ -950,7 +960,30 @@
                 if (data.success) {
                     messageInput.value = '';
                     messageInput.style.height = 'auto';
-                    loadChatData(currentChatUser); // Reload messages
+
+                    // Add message immediately to UI for instant feedback
+                    const newMessage = {
+                        id: Date.now(),
+                        me: true,
+                        noidung: message,
+                        thoigiantao: new Date().toISOString()
+                    };
+
+                    // The polling will pick up the real message from server soon
+                    setTimeout(() => {
+                        if (currentChatUserId) {
+                            // Force refresh messages to get the real message from server
+                            fetch(`/api/chat/messages/${currentChatUserId}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.messages) {
+                                        displayMessages(data.messages);
+                                        const messagesContainer = document.getElementById('chatMessages');
+                                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                                    }
+                                });
+                        }
+                    }, 500);
                 } else {
                     alert('Gửi tin nhắn thất bại: ' + (data.error || 'Lỗi không xác định'));
                 }
@@ -1041,6 +1074,94 @@
         function closeMobileSidebar() {
             document.getElementById('chatSidebar').classList.remove('open');
             document.querySelector('.mobile-overlay').classList.remove('active');
+        }
+
+        // Real-time messaging
+        let messagePollingInterval = null;
+        let lastMessageTime = null;
+
+        function startMessagePolling() {
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+            }
+
+            messagePollingInterval = setInterval(async () => {
+                if (currentChatUserId) {
+                    try {
+                        const response = await fetch(`/api/chat/messages/${currentChatUserId}`);
+                        const data = await response.json();
+
+                        if (data.messages && data.messages.length > 0) {
+                            const latestMessage = data.messages[data.messages.length - 1];
+                            const latestTime = new Date(latestMessage.thoigiantao).getTime();
+
+                            // Only reload if there are new messages
+                            if (!lastMessageTime || latestTime > lastMessageTime) {
+                                displayMessages(data.messages);
+                                lastMessageTime = latestTime;
+
+                                // Scroll to bottom for new messages
+                                const messagesContainer = document.getElementById('chatMessages');
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error polling messages:', error);
+                    }
+                }
+            }, 2000); // Poll every 2 seconds
+        }
+
+        function stopMessagePolling() {
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+                messagePollingInterval = null;
+            }
+        }
+
+        // Call functionality
+        let currentChatUserId = null;
+
+        function initiateCallFromChat(callType) {
+            if (!currentChatUserId) {
+                alert('Vui lòng chọn người để chat trước');
+                return;
+            }
+
+            // Show loading state
+            const btn = callType === 'voice' ? document.getElementById('voiceCallBtn') : document.getElementById('videoCallBtn');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            fetch('/call/initiate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        receiver_id: currentChatUserId,
+                        call_type: callType
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Open call in new window or redirect
+                        window.location.href = `/call/${data.call_id}`;
+                    } else {
+                        alert(data.error || 'Không thể khởi tạo cuộc gọi');
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error initiating call:', error);
+                    alert('Có lỗi xảy ra khi khởi tạo cuộc gọi');
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                });
         }
     </script>
 </body>

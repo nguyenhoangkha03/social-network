@@ -26,14 +26,14 @@ class PostController extends Controller
         }
 
         // Lấy danh sách bản nháp và bài đã đăng của user
-        $drafts = \App\Models\BaiViet::where('id_user', $user->id_user)->where('is_draft', true)->orderByDesc('thoigiancapnhat')->get();
-        $published = \App\Models\BaiViet::where('id_user', $user->id_user)->where('is_draft', false)->orderByDesc('thoigiandang')->get();
+        $drafts = \App\Models\BaiViet::where('user_id', $user->user_id)->where('is_draft', true)->orderByDesc('thoigiancapnhat')->get();
+        $published = \App\Models\BaiViet::where('user_id', $user->user_id)->where('is_draft', false)->orderByDesc('thoigiandang')->get();
 
         // Nếu có query edit, lấy bài viết để sửa
         $editPost = null;
         if ($request->has('edit')) {
             $editPost = \App\Models\BaiViet::where('id_baiviet', $request->query('edit'))
-                ->where('id_user', $user->id_user)
+                ->where('user_id', $user->user_id)
                 ->first();
         }
 
@@ -110,7 +110,7 @@ class PostController extends Controller
             // Tạo bài viết mới
             $baiviet = new BaiViet();
             $baiviet->id_baiviet = $id_baiviet;
-            $baiviet->id_user = Session::get('user_id');
+            $baiviet->user_id = Session::get('user_id');
             $baiviet->tieude = $request->tieude;
             $baiviet->mota = $request->mota;
             $baiviet->noidung = $request->noidung;
@@ -135,7 +135,7 @@ class PostController extends Controller
             return redirect()->route('home')->with('success', 'Đăng bài viết thành công!');
         } catch (\Exception $e) {
             DB::rollback();
-            
+
             // Log lỗi để debug
             Log::error('Lỗi khi tạo bài viết: ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());
@@ -153,7 +153,7 @@ class PostController extends Controller
         $userLiked = false;
         if (session()->has('user_id')) {
             $user = \App\Models\User::find(session('user_id'));
-            $userLiked = \App\Models\BaiVietLike::where('id_user', session('user_id'))
+            $userLiked = \App\Models\BaiVietLike::where('user_id', session('user_id'))
                 ->where('id_baiviet', $id)
                 ->exists();
         }
@@ -181,7 +181,7 @@ class PostController extends Controller
             return response()->json(['error' => 'Không tìm thấy bài viết'], 404);
         }
         $comment = \App\Models\BinhLuan::create([
-            'id_user' => session('user_id'),
+            'user_id' => session('user_id'),
             'id_baiviet' => $id,
             'noidung' => $request->noidung,
             'thoigiantao' => now(),
@@ -189,9 +189,9 @@ class PostController extends Controller
         ]);
         $comment->load('user');
         // Tạo notification cho chủ bài viết (nếu không phải tự comment bài của mình)
-        if ($post->id_user != session('user_id')) {
+        if ($post->user_id != session('user_id')) {
             \App\Models\Notification::create([
-                'user_id' => $post->id_user,
+                'user_id' => $post->user_id,
                 'type' => 'comment',
                 'data' => [
                     'from_user_id' => session('user_id'),
@@ -224,7 +224,7 @@ class PostController extends Controller
         if (!$comment) {
             return response()->json(['error' => 'Không tìm thấy bình luận'], 404);
         }
-        if ($comment->id_user != $userId) {
+        if ($comment->user_id != $userId) {
             return response()->json(['error' => 'Bạn không có quyền chỉnh sửa bình luận này'], 403);
         }
         $request->validate([
@@ -239,7 +239,7 @@ class PostController extends Controller
     {
         $userId = Session::get('user_id');
         $draft = \App\Models\BaiViet::where('id_baiviet', $id)
-            ->where('id_user', $userId)
+            ->where('user_id', $userId)
             ->where('is_draft', true)
             ->first();
 
@@ -254,7 +254,7 @@ class PostController extends Controller
     {
         $userId = Session::get('user_id');
         $post = \App\Models\BaiViet::where('id_baiviet', $id)
-            ->where('id_user', $userId)
+            ->where('user_id', $userId)
             ->where('is_draft', false)
             ->first();
 
@@ -276,7 +276,7 @@ class PostController extends Controller
             $post = \App\Models\BaiViet::findOrFail($id);
 
             // Xóa mọi like cũ (nếu có)
-            $deleted = \App\Models\BaiVietLike::where('id_user', $userId)
+            $deleted = \App\Models\BaiVietLike::where('user_id', $userId)
                 ->where('id_baiviet', $id)
                 ->delete();
 
@@ -287,14 +287,14 @@ class PostController extends Controller
             } else {
                 // Nếu chưa like, thì tạo mới
                 \App\Models\BaiVietLike::create([
-                    'id_user' => $userId,
+                    'user_id' => $userId,
                     'id_baiviet' => $id,
                 ]);
                 $post->increment('soluotlike');
                 $isLiked = true;
-                if ($post->id_user != $userId) {
+                if ($post->user_id != $userId) {
                     \App\Models\Notification::create([
-                        'user_id' => $post->id_user,
+                        'user_id' => $post->user_id,
                         'type' => 'like',
                         'data' => [
                             'from_user_id' => $userId,
@@ -402,8 +402,8 @@ class PostController extends Controller
         if (!$comment) {
             return response()->json(['error' => 'Không tìm thấy bình luận'], 404);
         }
-        $isOwner = $comment->id_user == $userId;
-        $isPostOwner = $comment->post && $comment->post->id_user == $userId;
+        $isOwner = $comment->user_id == $userId;
+        $isPostOwner = $comment->post && $comment->post->user_id == $userId;
         if (!$isOwner && !$isPostOwner) {
             return response()->json(['error' => 'Bạn không có quyền xóa bình luận này'], 403);
         }
@@ -426,7 +426,7 @@ class PostController extends Controller
             return response()->json(['error' => 'Chỉ có thể ghim bình luận cha'], 400);
         }
         $post = \App\Models\BaiViet::find($comment->id_baiviet);
-        if (!$post || $post->id_user != $userId) {
+        if (!$post || $post->user_id != $userId) {
             return response()->json(['error' => 'Bạn không có quyền ghim bình luận này'], 403);
         }
         // Nếu đã ghim bình luận này thì bỏ ghim, ngược lại thì ghim

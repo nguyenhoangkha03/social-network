@@ -681,8 +681,8 @@
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    @if($currentUser && $currentUser->id_user == $user->id_user)
-                    <a href="{{ route('profile.edit', $user->id_user) }}" class="btn btn-primary">
+                    @if($currentUser && $currentUser->user_id == $user->user_id)
+                    <a href="{{ route('profile.edit', $user->user_id) }}" class="btn btn-primary">
                         <i class="fas fa-edit"></i>
                         Chỉnh sửa hồ sơ
                     </a>
@@ -691,11 +691,11 @@
                         Tạo bài viết
                     </a>
                     @elseif($currentUser)
-                    <button id="followBtn" class="btn {{ $isFollowing ? 'btn-success' : 'btn-primary' }}" onclick="toggleFollow({{ $user->id_user }})">
+                    <button id="followBtn" class="btn {{ $isFollowing ? 'btn-success' : 'btn-primary' }}" onclick="toggleFollow({{ $user->user_id }})">
                         <i class="fas fa-{{ $isFollowing ? 'check' : 'user-plus' }}"></i>
                         <span id="followText">{{ $isFollowing ? 'Đang theo dõi' : 'Theo dõi' }}</span>
                     </button>
-                    <a href="{{ route('friends.chat', $user->id_user) }}" class="btn btn-secondary">
+                    <a href="{{ route('friends.chat', $user->user_id) }}" class="btn btn-secondary">
                         <i class="fas fa-message"></i>
                         Nhắn tin
                     </a>

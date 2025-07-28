@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('chanel_block', function (Blueprint $table) {
             $table->increments('id_chanel_block');
-            $table->unsignedInteger('id_user');
+            $table->unsignedInteger('user_id');
             $table->unsignedInteger('id_chanel');
             $table->timestamp('taoluc')->nullable();
             $table->timestamp('capnhatluc')->nullable();
 
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('id_chanel')->references('id_chanel')->on('chanel')->onDelete('cascade');
         });
     }
@@ -30,4 +30,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('chanel_block');
     }
-}; 
+};

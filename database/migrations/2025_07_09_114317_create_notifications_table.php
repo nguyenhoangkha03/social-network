@@ -19,7 +19,7 @@ return new class extends Migration
             $table->boolean('is_read')->default(false); // Đã đọc hay chưa
             $table->timestamps();
 
-            $table->foreign('user_id')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
         });
     }
 

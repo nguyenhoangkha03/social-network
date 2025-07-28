@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('user_chanel', function (Blueprint $table) {
-            $table->unsignedInteger('id_user');
+            $table->unsignedInteger('user_id');
             $table->unsignedInteger('id_chanel');
-            $table->primary(['id_user', 'id_chanel']);
+            $table->primary(['user_id', 'id_chanel']);
 
-            $table->foreign('id_user')->references('id_user')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('id_chanel')->references('id_chanel')->on('chanel')->onDelete('cascade');
         });
     }
@@ -28,4 +28,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('user_chanel');
     }
-}; 
+};

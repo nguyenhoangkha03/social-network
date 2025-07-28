@@ -697,7 +697,7 @@
                     </ul>
                     @if(count($published) > 5)
                     <div style="text-align: center; margin-top: var(--space-3);">
-                        <a href="{{ route('user.profile', auth()->user()->id_user ?? session('user_id')) }}" class="btn btn-secondary" style="font-size: 0.875rem; padding: var(--space-2) var(--space-4);">
+                        <a href="{{ route('user.profile', auth()->user()->user_id ?? session('user_id')) }}" class="btn btn-secondary" style="font-size: 0.875rem; padding: var(--space-2) var(--space-4);">
                             Xem tất cả
                         </a>
                     </div>
@@ -973,31 +973,31 @@
                     quill.insertText(range.index, 'Đang tải ảnh...', 'user');
 
                     fetch('/upload-image', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && data.url) {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success && data.url) {
+                                // Remove loading text
+                                quill.deleteText(range.index, 'Đang tải ảnh...'.length);
+                                // Insert image
+                                quill.insertEmbed(range.index, 'image', data.url);
+                                quill.setSelection(range.index + 1);
+                            } else {
+                                // Remove loading text
+                                quill.deleteText(range.index, 'Đang tải ảnh...'.length);
+                                alert('Upload ảnh thất bại: ' + (data.error || 'Lỗi không xác định'));
+                            }
+                        })
+                        .catch(error => {
                             // Remove loading text
                             quill.deleteText(range.index, 'Đang tải ảnh...'.length);
-                            // Insert image
-                            quill.insertEmbed(range.index, 'image', data.url);
-                            quill.setSelection(range.index + 1);
-                        } else {
-                            // Remove loading text
-                            quill.deleteText(range.index, 'Đang tải ảnh...'.length);
-                            alert('Upload ảnh thất bại: ' + (data.error || 'Lỗi không xác định'));
-                        }
-                    })
-                    .catch(error => {
-                        // Remove loading text
-                        quill.deleteText(range.index, 'Đang tải ảnh...'.length);
-                        alert('Lỗi upload ảnh: ' + error.message);
-                    });
+                            alert('Lỗi upload ảnh: ' + error.message);
+                        });
                 }
             };
         }

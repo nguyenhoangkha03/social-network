@@ -12,7 +12,7 @@ class BinhLuan extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_user',
+        'user_id',
         'id_baiviet',
         'noidung',
         'thoigiantao',
@@ -26,7 +26,7 @@ class BinhLuan extends Model
     // Quan hệ với User
     public function user()
     {
-        return $this->belongsTo(User::class, 'id_user', 'id_user');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     // Quan hệ với BaiViet
@@ -40,4 +40,4 @@ class BinhLuan extends Model
     {
         return $this->hasMany(BinhLuan::class, 'parent_id', 'id_binhluan');
     }
-} 
+}

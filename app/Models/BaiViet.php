@@ -13,7 +13,7 @@ class BaiViet extends Model
 
     protected $fillable = [
         'id_baiviet',
-        'id_user',
+        'user_id',
         'tieude',
         'mota',
         'noidung',
@@ -35,7 +35,7 @@ class BaiViet extends Model
     // Relationship với User
     public function user()
     {
-        return $this->belongsTo(User::class, 'id_user', 'id_user');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     // Relationship với BaiVietLike
@@ -59,7 +59,7 @@ class BaiViet extends Model
     // Scope để lấy bài viết theo user
     public function scopeByUser($query, $userId)
     {
-        return $query->where('id_user', $userId);
+        return $query->where('user_id', $userId);
     }
 
     // Accessor để lấy URL ảnh bìa
@@ -88,4 +88,4 @@ class BaiViet extends Model
     {
         $this->decrement('soluotlike');
     }
-} 
+}

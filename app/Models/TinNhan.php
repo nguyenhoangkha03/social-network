@@ -14,7 +14,7 @@ class TinNhan extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_user',
+        'user_id',
         'id_chanel',
         'receiver_id',
         'noidung',
@@ -31,11 +31,11 @@ class TinNhan extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'id_user', 'id_user');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     public function receiver()
     {
-        return $this->belongsTo(User::class, 'receiver_id', 'id_user');
+        return $this->belongsTo(User::class, 'receiver_id', 'user_id');
     }
 }

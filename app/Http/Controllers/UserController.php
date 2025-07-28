@@ -65,7 +65,7 @@ class UserController extends Controller
 
         // Lấy bài viết đã đăng của user
         $posts = BaiViet::with('user')
-            ->where('id_user', $id)
+            ->where('user_id', $id)
             ->where('is_draft', false)
             ->orderByDesc('thoigiandang')
             ->get();
@@ -100,8 +100,8 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $validated = $request->validate([
             'hoten' => 'required|string|max:200',
-            'username' => 'required|string|max:200|unique:users,username,' . $id . ',id_user',
-            'email' => 'required|email|max:200|unique:users,email,' . $id . ',id_user',
+            'username' => 'required|string|max:200|unique:users,username,' . $id . ',user_id',
+            'email' => 'required|email|max:200|unique:users,email,' . $id . ',user_id',
             'sodienthoai' => 'nullable|numeric',
             'diachi' => 'nullable|string|max:200',
             'gioitinh' => 'nullable|in:0,1,2',
@@ -118,7 +118,7 @@ class UserController extends Controller
             $user->hinhanh = file_get_contents($image->getRealPath());
         }
         $user->save();
-        return redirect()->route('user.profile', $user->id_user)->with('success', 'Cập nhật hồ sơ thành công!');
+        return redirect()->route('user.profile', $user->user_id)->with('success', 'Cập nhật hồ sơ thành công!');
     }
 
     // Tìm kiếm bạn bè
@@ -143,13 +143,13 @@ class UserController extends Controller
         $friends = [];
         $friendIds = [];
         if ($currentUser) {
-            $friendIds = \App\Models\DanhSachBanBe::where('user_id_1', $currentUser->id_user)
-                ->orWhere('user_id_2', $currentUser->id_user)
+            $friendIds = \App\Models\DanhSachBanBe::where('user_id_1', $currentUser->user_id)
+                ->orWhere('user_id_2', $currentUser->user_id)
                 ->get()
-                ->map(function($row) use ($currentUser) {
-                    return $row->user_id_1 == $currentUser->id_user ? $row->user_id_2 : $row->user_id_1;
+                ->map(function ($row) use ($currentUser) {
+                    return $row->user_id_1 == $currentUser->user_id ? $row->user_id_2 : $row->user_id_1;
                 })->toArray();
-            $friends = User::where('id_user', '!=', $currentUser->id_user)->get();
+            $friends = User::where('user_id', '!=', $currentUser->user_id)->get();
         }
         return view('friends.list', compact('friends', 'currentUser', 'friendIds'));
     }
@@ -190,17 +190,17 @@ class UserController extends Controller
 
         $currentUser = User::find(Session::get('user_id'));
         $friend = User::find($friend_id);
-        
+
         if (!$friend) {
             abort(404, 'Không tìm thấy người dùng');
         }
 
         // Lấy lịch sử tin nhắn giữa 2 user
-        $messages = \App\Models\TinNhan::where(function($q) use ($currentUser, $friend_id) {
-                $q->where('id_user', $currentUser->id_user)->where('receiver_id', $friend_id);
-            })->orWhere(function($q) use ($currentUser, $friend_id) {
-                $q->where('id_user', $friend_id)->where('receiver_id', $currentUser->id_user);
-            })
+        $messages = \App\Models\TinNhan::where(function ($q) use ($currentUser, $friend_id) {
+            $q->where('user_id', $currentUser->user_id)->where('receiver_id', $friend_id);
+        })->orWhere(function ($q) use ($currentUser, $friend_id) {
+            $q->where('user_id', $friend_id)->where('receiver_id', $currentUser->user_id);
+        })
             ->orderBy('thoigiantao', 'asc')
             ->get();
 
@@ -214,9 +214,9 @@ class UserController extends Controller
             return response()->json(['error' => 'Chưa đăng nhập'], 401);
         }
         $user = \App\Models\User::find(session('user_id'));
-        $followers = $user->followersList()->get()->map(function($u) {
+        $followers = $user->followersList()->get()->map(function ($u) {
             return [
-                'id_user' => $u->id_user,
+                'user_id' => $u->user_id,
                 'hoten' => $u->hoten,
                 'avatar' => $u->hinhanh ? 'data:image/jpeg;base64,' . base64_encode($u->hinhanh) : null,
             ];
@@ -230,9 +230,9 @@ class UserController extends Controller
             return response()->json(['error' => 'Chưa đăng nhập'], 401);
         }
         $user = \App\Models\User::find(session('user_id'));
-        $following = $user->following()->get()->map(function($u) {
+        $following = $user->following()->get()->map(function ($u) {
             return [
-                'id_user' => $u->id_user,
+                'user_id' => $u->user_id,
                 'hoten' => $u->hoten,
                 'avatar' => $u->hinhanh ? 'data:image/jpeg;base64,' . base64_encode($u->hinhanh) : null,
             ];
