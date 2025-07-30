@@ -22,14 +22,24 @@ class SignalingController extends Controller
         $senderId = Session::get('user_id');
 
         // Store signal in database
-        CallSignal::create([
+        $signal = CallSignal::create([
             'call_id' => $callId,
             'sender_id' => $senderId,
             'signal_type' => $signalType,
             'signal_data' => $signalData
         ]);
 
-        return response()->json(['success' => true]);
+        \Log::info("Signal sent: {$signalType} for call {$callId} by user {$senderId}");
+
+        return response()->json([
+            'success' => true, 
+            'signal_id' => $signal->id,
+            'debug' => [
+                'call_id' => $callId,
+                'signal_type' => $signalType,
+                'sender_id' => $senderId
+            ]
+        ]);
     }
 
     public function getSignals(Request $request, $callId)
@@ -49,12 +59,16 @@ class SignalingController extends Controller
             $formattedSignals[] = [
                 'sender_id' => $signal->sender_id,
                 'type' => $signal->signal_type,
-                'data' => $signal->signal_data,
+                'data' => $signal->signal_data, // This is already an array due to casting
                 'timestamp' => $signal->created_at->timestamp
             ];
             
             // Mark as processed
             $signal->markAsProcessed();
+        }
+
+        if (!empty($formattedSignals)) {
+            \Log::info("Retrieved " . count($formattedSignals) . " signals for call {$callId} for user {$currentUserId}");
         }
 
         return response()->json(['signals' => $formattedSignals]);

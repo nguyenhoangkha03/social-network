@@ -374,6 +374,64 @@ Route::post('/signaling/send', [SignalingController::class, 'sendSignal'])->name
 Route::get('/signaling/get/{callId}', [SignalingController::class, 'getSignals'])->name('signaling.get');
 Route::get('/signaling/poll/{callId}', [SignalingController::class, 'pollSignals'])->name('signaling.poll');
 
+// API để check incoming calls cho user hiện tại
+Route::get('/api/incoming-calls', function() {
+    try {
+        if (!session()->has('user_id')) {
+            return response()->json(['calls' => []]);
+        }
+        
+        $userId = session('user_id');
+        $incomingCalls = \App\Models\Call::where('receiver_id', $userId)
+            ->where('status', 'initiating')
+            ->with(['caller'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($call) {
+                return [
+                    'call_id' => $call->call_id,
+                    'caller_id' => $call->caller_id,
+                    'caller_name' => $call->caller->hoten ?? $call->caller->username,
+                    'caller_avatar' => $call->caller->hinhanh ? base64_encode($call->caller->hinhanh) : null,
+                    'call_type' => $call->call_type,
+                    'created_at' => $call->created_at->toISOString()
+                ];
+            });
+            
+        return response()->json(['calls' => $incomingCalls]);
+    } catch (Exception $e) {
+        return response()->json(['calls' => [], 'error' => $e->getMessage()]);
+    }
+});
+
+// Debug signaling
+Route::get('/debug-signaling/{callId}', function($callId) {
+    try {
+        $signals = \App\Models\CallSignal::where('call_id', $callId)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($signal) {
+                return [
+                    'id' => $signal->id,
+                    'call_id' => $signal->call_id,
+                    'sender_id' => $signal->sender_id,
+                    'signal_type' => $signal->signal_type,
+                    'processed' => $signal->processed,
+                    'created_at' => $signal->created_at->toISOString(),
+                    'signal_data_type' => isset(json_decode($signal->signal_data, true)['type']) ? json_decode($signal->signal_data, true)['type'] : 'unknown'
+                ];
+            });
+            
+        return response()->json([
+            'call_id' => $callId,
+            'total_signals' => $signals->count(),
+            'signals' => $signals
+        ]);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()]);
+    }
+});
+
 // Debug routes
 Route::get('/debug-db', function () {
     try {

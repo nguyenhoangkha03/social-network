@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Debug Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-panel { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #logs { background: #000; color: #0f0; padding: 10px; height: 300px; overflow-y: scroll; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>WebRTC Debug Tool</h1>
+    
+    <div class="debug-panel">
+        <h3>API Tests</h3>
+        <button onclick="testDatabase()">Test Database</button>
+        <button onclick="testIncomingCalls()">Test Incoming Calls</button>
+        <button onclick="testSignaling()">Test Signaling</button>
+    </div>
+
+    <div class="debug-panel">
+        <h3>Call ID Test</h3>
+        <input type="text" id="callIdInput" placeholder="Enter Call ID" style="padding: 8px; margin: 5px;">
+        <button onclick="testSignalingForCall()">Test Signaling for Call</button>
+        <button onclick="debugSignalingForCall()">Debug Signaling Messages</button>
+    </div>
+
+    <div class="debug-panel">
+        <h3>WebRTC Test</h3>
+        <button onclick="testGetUserMedia()">Test Camera/Mic Access</button>
+        <button onclick="testSTUNServers()">Test STUN Servers</button>
+    </div>
+
+    <div id="logs"></div>
+
+    <script>
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logs.innerHTML += `[${timestamp}] ${message}\n`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        async function testDatabase() {
+            try {
+                log('Testing database connection...');
+                const response = await fetch('/debug-db');
+                const data = await response.json();
+                log(`Database OK: ${data.users} users, ${data.friends} friends, ${data.calls} calls, ${data.signals} signals`);
+                log(`Tables: ${JSON.stringify(data.tables_status)}`);
+            } catch (error) {
+                log(`Database error: ${error.message}`);
+            }
+        }
+
+        async function testIncomingCalls() {
+            try {
+                log('Testing incoming calls API...');
+                const response = await fetch('/api/incoming-calls');
+                const data = await response.json();
+                log(`Incoming calls: ${data.calls.length} calls found`);
+                if (data.calls.length > 0) {
+                    data.calls.forEach(call => {
+                        log(`- Call ${call.call_id}: ${call.caller_name} (${call.call_type})`);
+                    });
+                }
+            } catch (error) {
+                log(`Incoming calls error: ${error.message}`);
+            }
+        }
+
+        async function testSignaling() {
+            try {
+                log('Testing signaling API...');
+                const testCallId = 'test_' + Date.now();
+                
+                // Send test signal
+                const sendResponse = await fetch('/signaling/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 'test'
+                    },
+                    body: JSON.stringify({
+                        call_id: testCallId,
+                        signal_type: 'test',
+                        signal_data: { type: 'test', message: 'Hello WebRTC' }
+                    })
+                });
+                
+                const sendData = await sendResponse.json();
+                log(`Signal sent: ${JSON.stringify(sendData)}`);
+                
+                // Get signals
+                setTimeout(async () => {
+                    const getResponse = await fetch(`/signaling/get/${testCallId}`);
+                    const getData = await getResponse.json();
+                    log(`Signals received: ${getData.signals.length} signals`);
+                }, 1000);
+                
+            } catch (error) {
+                log(`Signaling error: ${error.message}`);
+            }
+        }
+
+        async function testSignalingForCall() {
+            const callId = document.getElementById('callIdInput').value;
+            if (!callId) {
+                log('Please enter a Call ID');
+                return;
+            }
+            
+            try {
+                log(`Testing signaling for call: ${callId}`);
+                const response = await fetch(`/signaling/get/${callId}`);
+                const data = await response.json();
+                log(`Found ${data.signals.length} signals for call ${callId}`);
+                data.signals.forEach((signal, index) => {
+                    log(`Signal ${index + 1}: ${signal.type} from user ${signal.sender_id}`);
+                });
+            } catch (error) {
+                log(`Signaling test error: ${error.message}`);
+            }
+        }
+
+        async function debugSignalingForCall() {
+            const callId = document.getElementById('callIdInput').value;
+            if (!callId) {
+                log('Please enter a Call ID');
+                return;
+            }
+            
+            try {
+                log(`Debugging signaling for call: ${callId}`);
+                const response = await fetch(`/debug-signaling/${callId}`);
+                const data = await response.json();
+                log(`Debug info: ${data.total_signals} total signals`);
+                data.signals.forEach((signal, index) => {
+                    log(`${index + 1}. ${signal.signal_type} (${signal.signal_data_type}) from user ${signal.sender_id}, processed: ${signal.processed}`);
+                });
+            } catch (error) {
+                log(`Debug error: ${error.message}`);
+            }
+        }
+
+        async function testGetUserMedia() {
+            try {
+                log('Testing camera/microphone access...');
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                log(`Media access OK: ${stream.getAudioTracks().length} audio tracks, ${stream.getVideoTracks().length} video tracks`);
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                log(`Media access error: ${error.message}`);
+            }
+        }
+
+        async function testSTUNServers() {
+            log('Testing STUN servers...');
+            const config = {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun.stunprotocol.org:3478' },
+                    { urls: 'stun:stun.cloudflare.com:3478' }
+                ]
+            };
+            
+            const pc = new RTCPeerConnection(config);
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    log(`ICE candidate: ${event.candidate.type} - ${event.candidate.candidate}`);
+                } else {
+                    log('ICE gathering completed');
+                    pc.close();
+                }
+            };
+            
+            // Create a dummy offer to start ICE gathering
+            pc.createOffer().then(offer => {
+                pc.setLocalDescription(offer);
+                log('Started ICE gathering...');
+            });
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            log('WebRTC Debug Tool loaded');
+            testDatabase();
+        });
+    </script>
+</body>
+</html>

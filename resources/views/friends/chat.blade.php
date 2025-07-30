@@ -725,6 +725,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadFriends();
             setupEventListeners();
+            startIncomingCallPolling(); // Add this line
 
             // Check if we have a specific friend to chat with
             const urlParams = new URLSearchParams(window.location.search);
@@ -1162,6 +1163,213 @@
                     btn.innerHTML = originalContent;
                     btn.disabled = false;
                 });
+        }
+
+        // Incoming call polling
+        function startIncomingCallPolling() {
+            setInterval(async () => {
+                try {
+                    const response = await fetch('/api/incoming-calls');
+                    const data = await response.json();
+                    
+                    if (data.calls && data.calls.length > 0) {
+                        for (const call of data.calls) {
+                            showIncomingCallNotification(call);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error checking incoming calls:', error);
+                }
+            }, 2000); // Check every 2 seconds
+        }
+
+        function showIncomingCallNotification(call) {
+            // Check if notification already exists
+            if (document.getElementById(`call-notification-${call.call_id}`)) {
+                return;
+            }
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = `call-notification-${call.call_id}`;
+            notification.className = 'incoming-call-notification';
+            notification.innerHTML = `
+                <div class="call-notification-content">
+                    <div class="call-avatar">
+                        ${call.caller_avatar ? 
+                            `<img src="data:image/jpeg;base64,${call.caller_avatar}" alt="Avatar">` : 
+                            '<i class="fas fa-user"></i>'
+                        }
+                    </div>
+                    <div class="call-info">
+                        <div class="caller-name">${call.caller_name}</div>
+                        <div class="call-type">
+                            <i class="fas fa-${call.call_type === 'video' ? 'video' : 'phone'}"></i>
+                            ${call.call_type === 'video' ? 'Video call' : 'Voice call'} đến
+                        </div>
+                    </div>
+                    <div class="call-actions">
+                        <button class="answer-btn" onclick="answerIncomingCall('${call.call_id}')">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="decline-btn" onclick="declineIncomingCall('${call.call_id}')">
+                            <i class="fas fa-phone-slash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Add styles if not exists
+            if (!document.getElementById('incoming-call-styles')) {
+                const styles = document.createElement('style');
+                styles.id = 'incoming-call-styles';
+                styles.textContent = `
+                    .incoming-call-notification {
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: white;
+                        border-radius: 12px;
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+                        padding: 16px;
+                        z-index: 10000;
+                        animation: slideIn 0.3s ease-out;
+                        border-left: 4px solid #10b981;
+                    }
+                    
+                    .call-notification-content {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    
+                    .call-avatar {
+                        width: 48px;
+                        height: 48px;
+                        border-radius: 50%;
+                        overflow: hidden;
+                        background: #f3f4f6;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    
+                    .call-avatar img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+                    
+                    .call-avatar i {
+                        font-size: 20px;
+                        color: #9ca3af;
+                    }
+                    
+                    .call-info {
+                        flex: 1;
+                    }
+                    
+                    .caller-name {
+                        font-weight: 600;
+                        color: #111827;
+                        margin-bottom: 4px;
+                    }
+                    
+                    .call-type {
+                        color: #6b7280;
+                        font-size: 14px;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                    }
+                    
+                    .call-actions {
+                        display: flex;
+                        gap: 8px;
+                    }
+                    
+                    .answer-btn, .decline-btn {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        border: none;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    }
+                    
+                    .answer-btn {
+                        background: #10b981;
+                        color: white;
+                    }
+                    
+                    .answer-btn:hover {
+                        background: #059669;
+                        transform: scale(1.05);
+                    }
+                    
+                    .decline-btn {
+                        background: #ef4444;
+                        color: white;
+                    }
+                    
+                    .decline-btn:hover {
+                        background: #dc2626;
+                        transform: scale(1.05);
+                    }
+                    
+                    @keyframes slideIn {
+                        from {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                `;
+                document.head.appendChild(styles);
+            }
+
+            document.body.appendChild(notification);
+
+            // Auto remove after 30 seconds
+            setTimeout(() => {
+                if (document.getElementById(`call-notification-${call.call_id}`)) {
+                    notification.remove();
+                }
+            }, 30000);
+        }
+
+        function answerIncomingCall(callId) {
+            // Remove notification
+            const notification = document.getElementById(`call-notification-${callId}`);
+            if (notification) notification.remove();
+            
+            // Redirect to call page
+            window.location.href = `/call/${callId}`;
+        }
+
+        function declineIncomingCall(callId) {
+            // Remove notification
+            const notification = document.getElementById(`call-notification-${callId}`);
+            if (notification) notification.remove();
+            
+            // Send decline request
+            fetch('/call/answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    call_id: callId,
+                    action: 'decline'
+                })
+            }).catch(error => console.error('Error declining call:', error));
         }
     </script>
 </body>
