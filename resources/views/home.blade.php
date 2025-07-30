@@ -539,7 +539,7 @@
             <nav class="header-nav">
                 <ul class="nav-links">
                     <li><a href="{{ route('home') }}" class="nav-link">Trang chủ</a></li>
-                    <li><a href="#" class="nav-link">Khám phá</a></li>
+                    <li><a href="{{ route('categories.index') }}" class="nav-link">Chủ đề</a></li>
                     <li><a href="#" class="nav-link">Cộng đồng</a></li>
                     <li><a href="#" class="nav-link">Về chúng tôi</a></li>
                 </ul>
@@ -860,6 +860,21 @@
                     </div>
 
                     <div class="categories-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-6);">
+                        @if(isset($categories) && count($categories) > 0)
+                        @foreach($categories->take(8) as $category)
+                        <a href="{{ route('category.show', $category->slug) }}" class="category-card" style="background: var(--surface-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-2xl); padding: var(--space-6); text-align: center; text-decoration: none; transition: all var(--duration-300) var(--ease-back); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+                            <div style="width: 60px; height: 60px; background: {{ $category->color }}; border-radius: var(--radius-2xl); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); font-size: var(--text-2xl); margin: 0 auto var(--space-4);">
+                                <i class="{{ $category->icon }}"></i>
+                            </div>
+                            <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">{{ $category->name }}</h3>
+                            <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--leading-relaxed); margin-bottom: var(--space-3);">{{ $category->description }}</p>
+                            <div style="display: flex; justify-content: center; align-items: center; gap: var(--space-1); color: var(--text-tertiary); font-size: var(--text-xs);">
+                                <i class="fas fa-file-alt"></i>
+                                <span>{{ $category->posts_count }} bài viết</span>
+                            </div>
+                        </a>
+                        @endforeach
+                        @else
                         <a href="#" class="category-card" style="background: var(--surface-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-2xl); padding: var(--space-6); text-align: center; text-decoration: none; transition: all var(--duration-300) var(--ease-back); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
                             <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: var(--radius-2xl); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); font-size: var(--text-2xl); margin: 0 auto var(--space-4);">
                                 <i class="fas fa-laptop-code"></i>
@@ -867,30 +882,17 @@
                             <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">Công Nghệ</h3>
                             <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--leading-relaxed);">Khám phá xu hướng công nghệ mới</p>
                         </a>
-
-                        <a href="#" class="category-card" style="background: var(--surface-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-2xl); padding: var(--space-6); text-align: center; text-decoration: none; transition: all var(--duration-300) var(--ease-back); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); border-radius: var(--radius-2xl); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); font-size: var(--text-2xl); margin: 0 auto var(--space-4);">
-                                <i class="fas fa-brain"></i>
+                        @endif
+                        
+                        @if(isset($categories) && count($categories) > 4)
+                        <a href="{{ route('categories.index') }}" class="category-card" style="background: var(--gradient-primary); color: var(--text-inverse); border: 1px solid var(--border-primary); border-radius: var(--radius-2xl); padding: var(--space-6); text-align: center; text-decoration: none; transition: all var(--duration-300) var(--ease-back); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+                            <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: var(--radius-2xl); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); font-size: var(--text-2xl); margin: 0 auto var(--space-4);">
+                                <i class="fas fa-plus"></i>
                             </div>
-                            <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">Phát triển bản thân</h3>
-                            <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--leading-relaxed);">Nâng cao kỹ năng và tư duy</p>
+                            <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); margin-bottom: var(--space-2);">Xem tất cả</h3>
+                            <p style="font-size: var(--text-sm); line-height: var(--leading-relaxed); opacity: 0.9;">Khám phá thêm nhiều chủ đề khác</p>
                         </a>
-
-                        <a href="#" class="category-card" style="background: var(--surface-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-2xl); padding: var(--space-6); text-align: center; text-decoration: none; transition: all var(--duration-300) var(--ease-back); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); border-radius: var(--radius-2xl); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); font-size: var(--text-2xl); margin: 0 auto var(--space-4);">
-                                <i class="fas fa-paint-brush"></i>
-                            </div>
-                            <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">Thiết Kế</h3>
-                            <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--leading-relaxed);">Sáng tạo và nghệ thuật số</p>
-                        </a>
-
-                        <a href="#" class="category-card" style="background: var(--surface-primary); border: 1px solid var(--border-primary); border-radius: var(--radius-2xl); padding: var(--space-6); text-align: center; text-decoration: none; transition: all var(--duration-300) var(--ease-back); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: var(--radius-2xl); display: flex; align-items: center; justify-content: center; color: var(--text-inverse); font-size: var(--text-2xl); margin: 0 auto var(--space-4);">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">Kinh Doanh</h3>
-                            <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--leading-relaxed);">Khởi nghiệp và đầu tư</p>
-                        </a>
+                        @endif
                     </div>
                 </section>
             </div>

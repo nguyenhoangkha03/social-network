@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use App\Models\BaiViet;
+use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +30,9 @@ class PostController extends Controller
         $drafts = \App\Models\BaiViet::where('user_id', $user->user_id)->where('is_draft', true)->orderByDesc('thoigiancapnhat')->get();
         $published = \App\Models\BaiViet::where('user_id', $user->user_id)->where('is_draft', false)->orderByDesc('thoigiandang')->get();
 
+        // Lấy danh sách categories
+        $categories = Category::active()->ordered()->get();
+
         // Nếu có query edit, lấy bài viết để sửa
         $editPost = null;
         if ($request->has('edit')) {
@@ -37,7 +41,7 @@ class PostController extends Controller
                 ->first();
         }
 
-        return view('post', compact('user', 'drafts', 'published', 'editPost'));
+        return view('post', compact('user', 'drafts', 'published', 'editPost', 'categories'));
     }
 
     public function store(Request $request)
@@ -56,6 +60,7 @@ class PostController extends Controller
         try {
             $request->validate([
                 'tieude' => 'required|string|min:10|max:255',
+                'category_id' => 'nullable|exists:categories,id',
                 'mota' => 'nullable|string|max:2000',
                 'noidung' => 'required|string|min:10', // Reduced min length for HTML content
                 'anh_bia' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB, added webp
@@ -79,11 +84,28 @@ class PostController extends Controller
             // Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
             DB::beginTransaction();
 
-            // Tạo ID bài viết ngẫu nhiên và đảm bảo không trùng lặp
-            do {
-                $id_baiviet = 'BV' . strtoupper(Str::random(8));
-                $exists = BaiViet::where('id_baiviet', $id_baiviet)->exists();
-            } while ($exists);
+            // Kiểm tra xem có phải edit bài viết không
+            $isEdit = $request->filled('edit_id');
+            $editPost = null;
+            
+            if ($isEdit) {
+                $editPost = BaiViet::where('id_baiviet', $request->edit_id)
+                    ->where('user_id', Session::get('user_id'))
+                    ->first();
+                
+                if (!$editPost) {
+                    throw new \Exception('Không tìm thấy bài viết để chỉnh sửa');
+                }
+            }
+
+            // Tạo ID bài viết ngẫu nhiên nếu là bài viết mới
+            $id_baiviet = $isEdit ? $editPost->id_baiviet : null;
+            if (!$isEdit) {
+                do {
+                    $id_baiviet = 'BV' . strtoupper(Str::random(8));
+                    $exists = BaiViet::where('id_baiviet', $id_baiviet)->exists();
+                } while ($exists);
+            }
 
             // Xử lý upload ảnh bìa
             $anh_bia_path = null;
@@ -107,19 +129,40 @@ class PostController extends Controller
                 }
             }
 
-            // Tạo bài viết mới
-            $baiviet = new BaiViet();
-            $baiviet->id_baiviet = $id_baiviet;
-            $baiviet->user_id = Session::get('user_id');
-            $baiviet->tieude = $request->tieude;
-            $baiviet->mota = $request->mota;
-            $baiviet->noidung = $request->noidung;
-            $baiviet->anh_bia = $anh_bia_path;
-            $baiviet->dinhkhem = $request->dinhkhem;
-            $baiviet->thoigiandang = now();
-            $baiviet->thoigiancapnhat = now();
-            $baiviet->soluotlike = 0;
-            $baiviet->is_draft = $request->has('save_draft') ? true : false;
+            // Tạo hoặc cập nhật bài viết
+            if ($isEdit) {
+                // Cập nhật bài viết hiện có
+                $baiviet = $editPost;
+                $baiviet->category_id = $request->category_id ?: null;
+                $baiviet->tieude = $request->tieude;
+                $baiviet->mota = $request->mota;
+                $baiviet->noidung = $request->noidung;
+                if ($anh_bia_path) {
+                    // Xóa ảnh cũ nếu có
+                    if ($baiviet->anh_bia && file_exists(public_path($baiviet->anh_bia))) {
+                        unlink(public_path($baiviet->anh_bia));
+                    }
+                    $baiviet->anh_bia = $anh_bia_path;
+                }
+                $baiviet->dinhkhem = $request->dinhkhem;
+                $baiviet->thoigiancapnhat = now();
+                $baiviet->is_draft = $request->has('save_draft') ? true : false;
+            } else {
+                // Tạo bài viết mới
+                $baiviet = new BaiViet();
+                $baiviet->id_baiviet = $id_baiviet;
+                $baiviet->user_id = Session::get('user_id');
+                $baiviet->category_id = $request->category_id ?: null; // Nếu không chọn thì để null
+                $baiviet->tieude = $request->tieude;
+                $baiviet->mota = $request->mota;
+                $baiviet->noidung = $request->noidung;
+                $baiviet->anh_bia = $anh_bia_path;
+                $baiviet->dinhkhem = $request->dinhkhem;
+                $baiviet->thoigiandang = now();
+                $baiviet->thoigiancapnhat = now();
+                $baiviet->soluotlike = 0;
+                $baiviet->is_draft = $request->has('save_draft') ? true : false;
+            }
 
             $result = $baiviet->save();
 
@@ -130,9 +173,12 @@ class PostController extends Controller
             DB::commit();
 
             if ($baiviet->is_draft) {
-                return redirect()->route('post.create')->with('success', 'Đã lưu nháp bài viết!');
+                $message = $isEdit ? 'Đã cập nhật nháp bài viết!' : 'Đã lưu nháp bài viết!';
+                return redirect()->route('post.create')->with('success', $message);
             }
-            return redirect()->route('home')->with('success', 'Đăng bài viết thành công!');
+            
+            $message = $isEdit ? 'Cập nhật bài viết thành công!' : 'Đăng bài viết thành công!';
+            return redirect()->route('home')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollback();
 

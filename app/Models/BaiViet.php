@@ -14,6 +14,7 @@ class BaiViet extends Model
     protected $fillable = [
         'id_baiviet',
         'user_id',
+        'category_id',
         'tieude',
         'mota',
         'noidung',
@@ -36,6 +37,12 @@ class BaiViet extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    // Relationship với Category
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     // Relationship với BaiVietLike

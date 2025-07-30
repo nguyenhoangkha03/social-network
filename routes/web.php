@@ -6,6 +6,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CallController;
 use App\Http\Controllers\SignalingController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use App\Models\BaiViet;
@@ -19,6 +20,11 @@ use Illuminate\Support\Facades\Storage;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/search', [HomeController::class, 'search'])->name('search');
+
+// Category routes
+Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('category.show');
+Route::get('/api/category/{slug}/posts', [CategoryController::class, 'posts'])->name('category.posts');
 
 Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register']);

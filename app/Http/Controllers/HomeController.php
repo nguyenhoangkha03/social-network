@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Models\User;
 use App\Models\BaiViet;
+use App\Models\Category;
 
 class HomeController extends Controller
 {
@@ -18,19 +19,22 @@ class HomeController extends Controller
         }
 
         // Lấy danh sách bài viết mới nhất
-        $baiviets = BaiViet::with('user')
+        $baiviets = BaiViet::with(['user', 'category'])
             ->where('is_draft', false)
             ->orderByDesc('thoigiandang')
             ->get();
 
         // Lấy bài viết nổi bật (>= 10 like)
-        $featuredPosts = BaiViet::with('user')
+        $featuredPosts = BaiViet::with(['user', 'category'])
             ->where('is_draft', false)
             ->where('soluotlike', '>=', 10)
             ->orderByDesc('soluotlike')
             ->orderByDesc('thoigiandang')
             ->limit(3)
             ->get();
+
+        // Lấy danh sách categories
+        $categories = Category::active()->ordered()->withCount('publishedBaiViets as posts_count')->get();
 
         // Kiểm tra user đã like bài viết nào chưa
         $userLikedPosts = [];
@@ -40,7 +44,7 @@ class HomeController extends Controller
                 ->toArray();
         }
 
-        return view('home', compact('user', 'baiviets', 'featuredPosts', 'userLikedPosts'));
+        return view('home', compact('user', 'baiviets', 'featuredPosts', 'userLikedPosts', 'categories'));
     }
 
     public function search(Request $request)

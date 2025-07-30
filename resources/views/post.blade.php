@@ -141,6 +141,18 @@
             color: var(--text-primary);
         }
 
+        .form-input:hover {
+            border-color: var(--primary);
+        }
+
+        select.form-input {
+            cursor: pointer;
+        }
+
+        select.form-input option {
+            padding: var(--space-2);
+        }
+
         .form-input:focus,
         .form-textarea:focus {
             outline: none;
@@ -539,6 +551,29 @@
                         <div class="char-counter">
                             <span id="tieude-counter">{{ strlen(old('tieude', isset($editPost) ? $editPost->tieude : '')) }}</span>/255 ký tự
                         </div>
+                    </div>
+
+                    <!-- Chủ đề -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-folder"></i>
+                            Chủ đề bài viết
+                        </label>
+                        <select name="category_id" id="category_id" class="form-input" style="background-image: url('data:image/svg+xml;charset=US-ASCII,<svg width=\"14\" height=\"8\" viewBox=\"0 0 14 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M1 1L7 7L13 1\" stroke=\"%23475569\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>'); background-repeat: no-repeat; background-position: right 16px center; padding-right: 48px; appearance: none; cursor: pointer;">
+                            <option value="">-- Chọn chủ đề (tùy chọn) --</option>
+                            @if(isset($categories))
+                                @foreach($categories as $category)
+                                <option value="{{ $category->id }}" 
+                                    {{ old('category_id', isset($editPost) ? $editPost->category_id : '') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <small style="color: var(--text-tertiary); font-size: 0.875rem; margin-top: var(--space-2); display: block;">
+                            <i class="fas fa-info-circle" style="margin-right: var(--space-1);"></i>
+                            Chọn chủ đề giúp người đọc dễ dàng tìm thấy bài viết của bạn hơn
+                        </small>
                     </div>
 
                     <!-- Mô tả -->
