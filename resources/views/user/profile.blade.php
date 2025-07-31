@@ -185,6 +185,16 @@
         .stat-item:hover {
             background: var(--surface-tertiary);
             transform: translateY(-2px);
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-item:hover .stat-number {
+            color: var(--primary-dark);
+        }
+
+        .stat-item:hover .stat-label {
+            color: var(--text-primary);
         }
 
         .stat-number {
@@ -534,6 +544,29 @@
             color: #f97316;
         }
 
+        /* Back Button Style */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            padding: var(--space-2) var(--space-4);
+            background: var(--surface-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .back-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            transform: translateX(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
         /* Empty States */
         .empty-state {
             text-align: center;
@@ -634,6 +667,14 @@
 
             <!-- Profile Info -->
             <div class="profile-info">
+                <!-- Back to Home Button -->
+                <div style="text-align: left; margin-bottom: var(--space-4);">
+                    <a href="{{ route('home') }}" class="back-btn">
+                        <i class="fas fa-home"></i>
+                        Quay lại trang chủ
+                    </a>
+                </div>
+                
                 <!-- Avatar -->
                 <div class="avatar-container">
                     @if($user->hinhanh)
@@ -661,22 +702,22 @@
 
                 <!-- Stats Row -->
                 <div class="stats-row">
-                    <div class="stat-item">
+                    <a href="{{ route('user.posts', $user->user_id) }}" class="stat-item" style="text-decoration: none; color: inherit;">
                         <span class="stat-number">{{ count($posts) }}</span>
                         <span class="stat-label">Bài viết</span>
-                    </div>
-                    <div class="stat-item">
+                    </a>
+                    <a href="{{ route('user.followers', $user->user_id) }}" class="stat-item" style="text-decoration: none; color: inherit;">
                         <span class="stat-number">{{ $followersCount }}</span>
                         <span class="stat-label">Người theo dõi</span>
-                    </div>
-                    <div class="stat-item">
+                    </a>
+                    <a href="{{ route('user.following', $user->user_id) }}" class="stat-item" style="text-decoration: none; color: inherit;">
                         <span class="stat-number">{{ $followingCount }}</span>
                         <span class="stat-label">Đang theo dõi</span>
-                    </div>
-                    <div class="stat-item">
+                    </a>
+                    <a href="{{ route('user.likes', $user->user_id) }}" class="stat-item" style="text-decoration: none; color: inherit;">
                         <span class="stat-number">{{ $posts->sum('soluotlike') }}</span>
                         <span class="stat-label">Lượt thích</span>
-                    </div>
+                    </a>
                 </div>
 
                 <!-- Action Buttons -->

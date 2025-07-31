@@ -540,8 +540,8 @@
                 <ul class="nav-links">
                     <li><a href="{{ route('home') }}" class="nav-link">Trang chủ</a></li>
                     <li><a href="{{ route('categories.index') }}" class="nav-link">Chủ đề</a></li>
-                    <li><a href="#" class="nav-link">Cộng đồng</a></li>
-                    <li><a href="#" class="nav-link">Về chúng tôi</a></li>
+                    <li><a href="{{ route('community') }}" class="nav-link">Cộng đồng</a></li>
+                    <li><a href="{{ route('about') }}" class="nav-link">Về chúng tôi</a></li>
                 </ul>
             </nav>
 
@@ -626,7 +626,7 @@
                         <i class="fas fa-comments" style="margin-right: var(--space-2);"></i>
                         Tin nhắn
                     </a>
-                    <a href="#">
+                    <a href="{{ route('settings') }}">
                         <i class="fas fa-cog" style="margin-right: var(--space-2);"></i>
                         Cài đặt
                     </a>
@@ -685,41 +685,68 @@
 
                 <div class="hero-visual">
                     <div class="hero-image-grid">
-                        <div class="hero-card">
-                            <div class="card-header">
-                                <div class="card-avatar">T</div>
-                                <div class="card-info">
-                                    <h4>Trần Minh An</h4>
-                                    <p>Tech Blogger</p>
+                        @if(isset($heroPosts) && count($heroPosts) > 0)
+                            @foreach($heroPosts as $heroPost)
+                                <div class="hero-card" onclick="window.location.href='{{ route('post.show', $heroPost->id_baiviet) }}'" style="cursor: pointer; transition: all 0.3s ease;">
+                                    <div class="card-header">
+                                        @if($heroPost->user->hinhanh)
+                                            <img src="data:image/jpeg;base64,{{ base64_encode($heroPost->user->hinhanh) }}" alt="Avatar" class="card-avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                        @else
+                                            <div class="card-avatar">{{ strtoupper(substr($heroPost->user->hoten ?? $heroPost->user->username ?? 'U', 0, 1)) }}</div>
+                                        @endif
+                                        <div class="card-info">
+                                            <h4>{{ $heroPost->user->hoten ?? $heroPost->user->username ?? 'Người dùng' }}</h4>
+                                            <p>{{ $heroPost->thoigiandang ? $heroPost->thoigiandang->format('d/m/Y') : 'N/A' }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="card-content">
+                                        "{{ Str::limit($heroPost->mota ?? $heroPost->noidung ?? $heroPost->tieude ?? 'Nội dung bài viết thú vị...', 120) }}"
+                                    </div>
+                                    <div class="card-stats">
+                                        <span><i class="fas fa-heart"></i> {{ $heroPost->soluotlike ?? 0 }}</span>
+                                        <span><i class="fas fa-comment"></i> {{ $heroPost->comments_count ?? 0 }}</span>
+                                        <span><i class="fas fa-eye"></i> {{ rand(10, 500) }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <!-- Fallback static cards if no posts available -->
+                            <div class="hero-card" style="cursor: pointer; opacity: 0.7;">
+                                <div class="card-header">
+                                    <div class="card-avatar">C</div>
+                                    <div class="card-info">
+                                        <h4>ChatPost</h4>
+                                        <p>Community</p>
+                                    </div>
+                                </div>
+                                <div class="card-content">
+                                    "Nơi kết nối và chia sẻ kiến thức cho cộng đồng. Hãy tham gia và trở thành một phần của chúng tôi!"
+                                </div>
+                                <div class="card-stats">
+                                    <span><i class="fas fa-heart"></i> 0</span>
+                                    <span><i class="fas fa-comment"></i> 0</span>
+                                    <span><i class="fas fa-eye"></i> 0</span>
                                 </div>
                             </div>
-                            <div class="card-content">
-                                "Nơi tôi có thể chia sẻ những kiến thức công nghệ mới nhất và kết nối với cộng đồng developer Việt Nam."
-                            </div>
-                            <div class="card-stats">
-                                <span><i class="fas fa-heart"></i> 1.2k</span>
-                                <span><i class="fas fa-comment"></i> 45</span>
-                                <span><i class="fas fa-share"></i> 120</span>
-                            </div>
-                        </div>
 
-                        <div class="hero-card">
-                            <div class="card-header">
-                                <div class="card-avatar">L</div>
-                                <div class="card-info">
-                                    <h4>Lê Thị Mai</h4>
-                                    <p>Content Creator</p>
+                            <div class="hero-card" style="cursor: pointer; opacity: 0.7;">
+                                <div class="card-header">
+                                    <div class="card-avatar">W</div>
+                                    <div class="card-info">
+                                        <h4>Welcome</h4>
+                                        <p>Chào mừng</p>
+                                    </div>
+                                </div>
+                                <div class="card-content">
+                                    "Hãy là người đầu tiên chia sẻ câu chuyện của bạn và tạo nên những kết nối ý nghĩa trong cộng đồng!"
+                                </div>
+                                <div class="card-stats">
+                                    <span><i class="fas fa-heart"></i> 0</span>
+                                    <span><i class="fas fa-comment"></i> 0</span>
+                                    <span><i class="fas fa-eye"></i> 0</span>
                                 </div>
                             </div>
-                            <div class="card-content">
-                                "Một community tuyệt vời để học hỏi và phát triển bản thân. Mình đã tìm được rất nhiều cảm hứng ở đây!"
-                            </div>
-                            <div class="card-stats">
-                                <span><i class="fas fa-heart"></i> 856</span>
-                                <span><i class="fas fa-comment"></i> 32</span>
-                                <span><i class="fas fa-share"></i> 78</span>
-                            </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -1322,6 +1349,23 @@
                             behavior: 'smooth',
                             block: 'start'
                         });
+                    }
+                });
+            });
+
+            // Hero card hover effects
+            document.querySelectorAll('.hero-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    if (this.onclick) { // Only add effects if clickable
+                        this.style.transform = 'translateY(-8px) scale(1.02)';
+                        this.style.boxShadow = '0 20px 40px rgba(0,0,0,0.15)';
+                    }
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    if (this.onclick) { // Only remove effects if clickable
+                        this.style.transform = 'translateY(0) scale(1)';
+                        this.style.boxShadow = '0 10px 30px rgba(0,0,0,0.1)';
                     }
                 });
             });

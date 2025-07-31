@@ -71,6 +71,8 @@
             gap: 20px;
             justify-content: center;
             margin-top: 40px;
+            position: relative;
+            z-index: 100;
         }
 
         .control-btn {
@@ -135,6 +137,7 @@
             font-size: 18px;
             font-weight: 600;
             display: none;
+            z-index: 1000;
         }
 
         .connection-status {
@@ -146,6 +149,7 @@
             padding: 5px 15px;
             border-radius: 15px;
             font-size: 14px;
+            z-index: 1000;
         }
 
         @keyframes pulse {
@@ -218,6 +222,15 @@
 
         .no-video-placeholder .user-avatar {
             margin-bottom: 20px;
+        }
+
+        /* Fixed positioning for video call controls */
+        .video-call-container .call-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
         }
 
         @media (max-width: 768px) {
@@ -362,14 +375,16 @@
         let timerInterval = null;
         let isCallConnected = false;
 
-        // Ultra-simple WebRTC configuration for maximum compatibility
+        // Improved WebRTC configuration for video
         const rtcConfig = {
             iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' }
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
             ],
-            iceCandidatePoolSize: 0,
+            iceCandidatePoolSize: 10,
             bundlePolicy: 'max-compat',
-            rtcpMuxPolicy: 'negotiate'
+            rtcpMuxPolicy: 'require'
         };
 
         // Initialize when page loads
@@ -384,25 +399,39 @@
             try {
                 console.log('Initializing', callType, 'call...');
                 
-                // Get media access based on call type
+                // Enhanced media constraints for video
                 const constraints = {
-                    audio: true,
-                    video: callType === 'video'
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    },
+                    video: callType === 'video' ? {
+                        width: { ideal: 1280, max: 1920 },
+                        height: { ideal: 720, max: 1080 },
+                        frameRate: { ideal: 30, max: 60 }
+                    } : false
                 };
                 
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                console.log('Media devices accessed successfully');
                 
                 if (callType === 'video') {
                     const localVideoElement = document.getElementById('localVideo');
                     if (localVideoElement) {
                         localVideoElement.srcObject = localStream;
-                        console.log('Camera and microphone access granted');
+                        console.log('Local video stream set');
+                        
+                        // Ensure video plays
+                        localVideoElement.onloadedmetadata = () => {
+                            localVideoElement.play().catch(e => console.log('Local video play error:', e));
+                        };
                     }
                 } else {
                     const localAudioElement = document.getElementById('localAudio');
                     if (localAudioElement) {
                         localAudioElement.srcObject = localStream;
-                        console.log('Microphone access granted');
+                        console.log('Local audio stream set');
                     }
                 }
                 
@@ -441,22 +470,33 @@
                 // Handle remote stream
                 peerConnection.ontrack = function(event) {
                     console.log('✅ Received remote track:', event.track.kind, 'from', event.streams.length, 'streams');
-                    remoteStream = event.streams[0];
                     
-                    if (callType === 'video') {
-                        const remoteVideoElement = document.getElementById('remoteVideo');
-                        if (remoteVideoElement) {
-                            remoteVideoElement.srcObject = remoteStream;
-                            console.log('✅ Set remote video source');
-                            // Hide placeholder when video starts
-                            const placeholder = document.getElementById('noVideoPlaceholder');
-                            if (placeholder) placeholder.style.display = 'none';
-                        }
-                    } else {
-                        const remoteAudioElement = document.getElementById('remoteAudio');
-                        if (remoteAudioElement) {
-                            remoteAudioElement.srcObject = remoteStream;
-                            console.log('✅ Set remote audio source');
+                    if (event.streams && event.streams[0]) {
+                        remoteStream = event.streams[0];
+                        
+                        if (callType === 'video') {
+                            const remoteVideoElement = document.getElementById('remoteVideo');
+                            if (remoteVideoElement) {
+                                remoteVideoElement.srcObject = remoteStream;
+                                console.log('✅ Set remote video source');
+                                
+                                // Ensure remote video plays and hide placeholder
+                                remoteVideoElement.onloadedmetadata = () => {
+                                    remoteVideoElement.play().then(() => {
+                                        console.log('✅ Remote video playing');
+                                        const placeholder = document.getElementById('noVideoPlaceholder');
+                                        if (placeholder) {
+                                            placeholder.style.display = 'none';
+                                        }
+                                    }).catch(e => console.log('Remote video play error:', e));
+                                };
+                            }
+                        } else {
+                            const remoteAudioElement = document.getElementById('remoteAudio');
+                            if (remoteAudioElement) {
+                                remoteAudioElement.srcObject = remoteStream;
+                                console.log('✅ Set remote audio source');
+                            }
                         }
                     }
                 };
@@ -607,12 +647,11 @@
             if (isVideoOff) {
                 cameraBtn.classList.add('active');
                 icon.className = 'fas fa-video-slash';
-                if (placeholder) placeholder.style.display = 'flex';
+                // Don't show placeholder for local video off, just for remote
                 console.log('📹 Camera turned off');
             } else {
                 cameraBtn.classList.remove('active');
                 icon.className = 'fas fa-video';
-                if (placeholder) placeholder.style.display = 'none';
                 console.log('📹 Camera turned on');
             }
         }
@@ -767,166 +806,74 @@
             }, 2000);
         }
 
-        function cleanSDP(sdp) {
-            console.log('🧹 Creating minimal SDP for maximum compatibility...');
+        function fixSDPFormat(sdp) {
+            console.log('🔧 Fixing SDP format issues...');
             
             const lines = sdp.split('\n');
-            const cleanedLines = [];
-            let inAudioSection = false;
-            let inVideoSection = false;
-            let hasAudioSection = false;
-            let hasVideoSection = false;
-            
-            // First pass: detect what sections we have
-            for (let line of lines) {
-                if (line.startsWith('m=audio')) hasAudioSection = true;
-                if (line.startsWith('m=video')) hasVideoSection = true;
-            }
-            
-            console.log('📋 SDP has audio:', hasAudioSection, 'video:', hasVideoSection);
+            const fixedLines = [];
             
             for (let line of lines) {
                 line = line.trim();
                 if (!line) continue;
                 
-                // Session-level headers (keep all)
-                if (line.startsWith('v=') || line.startsWith('o=') || line.startsWith('s=') || 
-                    line.startsWith('t=') || line.startsWith('c=') || line.startsWith('b=')) {
-                    cleanedLines.push(line);
-                    continue;
-                }
-                
-                // Audio media section
-                if (line.startsWith('m=audio')) {
-                    inAudioSection = true;
-                    inVideoSection = false;
+                // Fix malformed SSRC lines
+                if (line.startsWith('a=ssrc:')) {
                     const parts = line.split(' ');
-                    cleanedLines.push(`m=audio ${parts[1]} ${parts[2]} 111`);
-                    console.log('✅ Added minimal audio m-line');
-                    continue;
-                }
-                
-                // Video media section
-                if (line.startsWith('m=video')) {
-                    inVideoSection = true;
-                    inAudioSection = false;
-                    const parts = line.split(' ');
-                    
-                    // For video calls, use VP8 instead of H264 for better compatibility
-                    if (callType === 'video') {
-                        cleanedLines.push(`m=video ${parts[1]} ${parts[2]} 96`);
-                        console.log('✅ Added minimal video m-line (VP8)');
-                    } else {
-                        // For voice calls, reject video
-                        cleanedLines.push(`m=video 0 ${parts[2]}`);
-                        console.log('✅ Rejected video m-line for voice call');
-                        inVideoSection = false;
-                    }
-                    continue;
-                }
-                
-                // Other media sections - skip them
-                if (line.startsWith('m=')) {
-                    inAudioSection = false;
-                    inVideoSection = false;
-                    continue;
-                }
-                
-                // Only process lines in active media sections
-                if (!inAudioSection && !inVideoSection) continue;
-                
-                // Audio section processing
-                if (inAudioSection) {
-                    if (line === 'a=rtpmap:111 opus/48000/2') {
-                        cleanedLines.push(line);
-                        console.log('✅ Added Opus rtpmap');
-                    } else if (line.startsWith('a=fmtp:111')) {
-                        cleanedLines.push('a=fmtp:111 useinbandfec=1');
-                        console.log('✅ Added simplified Opus fmtp');
-                    } else if (line === 'a=sendrecv') {
-                        cleanedLines.push(line);
-                        console.log('✅ Added audio sendrecv');
-                    } else if (line === 'a=rtcp-mux') {
-                        cleanedLines.push(line);
-                        console.log('✅ Added audio rtcp-mux');
-                    } else if (line.startsWith('a=ice-ufrag:') || line.startsWith('a=ice-pwd:')) {
-                        cleanedLines.push(line);
-                        console.log('✅ Added audio ICE credential');
-                    } else if (line.startsWith('a=fingerprint:')) {
-                        cleanedLines.push(line);
-                        console.log('✅ Added audio fingerprint');
-                    } else if (line.startsWith('a=setup:')) {
-                        cleanedLines.push(line);
-                        console.log('✅ Added audio setup');
-                    } else if (line.startsWith('a=mid:')) {
-                        cleanedLines.push(line);
-                        console.log('✅ Added audio mid');
-                    } else {
-                        console.log('🗑️ Skipping audio line:', line);
-                    }
-                }
-                
-                // Video section processing (only for video calls)
-                if (inVideoSection && callType === 'video') {
-                    if (line === 'a=rtpmap:96 VP8/90000') {
-                        cleanedLines.push(line);
-                        console.log('✅ Added VP8 rtpmap');
-                    } else if (line.startsWith('a=rtpmap:96')) {
-                        // Force VP8 even if original was different
-                        cleanedLines.push('a=rtpmap:96 VP8/90000');
-                        console.log('✅ Forced VP8 rtpmap');
-                    } else if (line.startsWith('a=fmtp:96')) {
-                        // Skip fmtp for VP8 to keep it simple
-                        console.log('🗑️ Skipping VP8 fmtp for simplicity');
-                    } else if (line === 'a=sendrecv') {
-                        cleanedLines.push(line);
-                        console.log('✅ Added video sendrecv');
-                    } else if (line === 'a=rtcp-mux') {
-                        cleanedLines.push(line);
-                        console.log('✅ Added video rtcp-mux');
-                    } else if (line.startsWith('a=ice-ufrag:') || line.startsWith('a=ice-pwd:')) {
-                        cleanedLines.push(line);
-                        console.log('✅ Added video ICE credential');
-                    } else if (line.startsWith('a=fingerprint:')) {
-                        cleanedLines.push(line);
-                        console.log('✅ Added video fingerprint');
-                    } else if (line.startsWith('a=setup:')) {
-                        cleanedLines.push(line);
-                        console.log('✅ Added video setup');
-                    } else if (line.startsWith('a=mid:')) {
-                        cleanedLines.push(line);
-                        console.log('✅ Added video mid');
-                    } else {
-                        console.log('🗑️ Skipping video line:', line);
-                    }
-                }
-            }
-            
-            // Add missing rtpmap for VP8 if video section exists but no rtpmap found
-            if (callType === 'video' && hasVideoSection) {
-                let hasVP8Rtpmap = false;
-                for (let line of cleanedLines) {
-                    if (line === 'a=rtpmap:96 VP8/90000') {
-                        hasVP8Rtpmap = true;
-                        break;
-                    }
-                }
-                if (!hasVP8Rtpmap) {
-                    // Find video section and add rtpmap after it
-                    for (let i = 0; i < cleanedLines.length; i++) {
-                        if (cleanedLines[i].startsWith('m=video')) {
-                            cleanedLines.splice(i + 1, 0, 'a=rtpmap:96 VP8/90000');
-                            console.log('✅ Added missing VP8 rtpmap');
-                            break;
+                    if (parts.length >= 3) {
+                        const ssrcId = parts[0].replace('a=ssrc:', '');
+                        
+                        // Check if it's a msid line without proper attribute
+                        if (parts[1] && parts[1].includes('-') && parts[2] && parts[2].includes('-')) {
+                            // This looks like "a=ssrc:123456 uuid1 uuid2" which should be "a=ssrc:123456 msid:uuid1 uuid2"
+                            const fixedLine = `a=ssrc:${ssrcId} msid:${parts[1]} ${parts[2]}`;
+                            fixedLines.push(fixedLine);
+                            console.log('🔧 Fixed SSRC line:', line, '→', fixedLine);
+                            continue;
                         }
                     }
                 }
+                
+                // Keep other lines as-is
+                fixedLines.push(line);
             }
             
-            const result = cleanedLines.join('\n') + '\n';
-            console.log('✅ Created minimal SDP with', cleanedLines.length, 'lines');
-            console.log('📋 Final SDP preview:', result.substring(0, 200) + '...');
+            const result = fixedLines.join('\n') + '\n';
+            console.log('✅ SDP format fixed');
             return result;
+        }
+
+        function logSDPDetails(sdp, label) {
+            console.log(`📋 ${label} SDP Details:`);
+            const lines = sdp.split('\n');
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('m=') || line.startsWith('a=rtpmap:') || 
+                    line.startsWith('a=fmtp:') || line.startsWith('a=mid:') ||
+                    line.startsWith('a=ssrc:')) {
+                    console.log(`  ${i}: ${line}`);
+                }
+            }
+        }
+
+        function isValidSDP(sdp) {
+            const lines = sdp.split('\n');
+            let hasVersion = false;
+            let hasOrigin = false;
+            let hasSession = false;
+            let hasTiming = false;
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('v=')) hasVersion = true;
+                if (line.startsWith('o=')) hasOrigin = true;
+                if (line.startsWith('s=')) hasSession = true;
+                if (line.startsWith('t=')) hasTiming = true;
+            }
+            
+            const isValid = hasVersion && hasOrigin && hasSession && hasTiming;
+            console.log('📊 SDP Validation:', {hasVersion, hasOrigin, hasSession, hasTiming, isValid});
+            return isValid;
         }
 
         async function createOffer() {
@@ -938,19 +885,26 @@
 
             try {
                 console.log('📡 Creating WebRTC offer...');
-                const rawOffer = await peerConnection.createOffer();
+                const offer = await peerConnection.createOffer({
+                    offerToReceiveAudio: true,
+                    offerToReceiveVideo: callType === 'video'
+                });
 
-                // Set raw SDP to local description (không clean local)
-                await peerConnection.setLocalDescription(rawOffer);
-                console.log('✅ Raw offer set as local description');
+                await peerConnection.setLocalDescription(offer);
+                console.log('✅ Offer set as local description');
 
-                // Clean SDP chỉ để gửi đi
-                const cleanedOffer = {
-                    type: rawOffer.type,
-                    sdp: cleanSDP(rawOffer.sdp)
+                // Log original SDP for debugging
+                logSDPDetails(offer.sdp, 'Original Offer');
+
+                // Fix SDP format before sending
+                const fixedSDP = fixSDPFormat(offer.sdp);
+                const fixedOffer = {
+                    type: offer.type,
+                    sdp: fixedSDP
                 };
-                sendSignal('offer', cleanedOffer);
-                console.log('📡 Cleaned offer sent via signaling');
+
+                sendSignal('offer', fixedOffer);
+                console.log('📡 Fixed offer sent via signaling');
 
             } catch (error) {
                 console.error('❌ Error creating offer:', error);
@@ -1008,33 +962,58 @@
             try {
                 console.log('📨 Received offer:', offer.type);
                 
-                // Clean the received offer SDP
-                const cleanedOffer = {
+                // Log received SDP for debugging
+                logSDPDetails(offer.sdp, 'Received Offer');
+                
+                // Fix SDP format issues
+                const fixedSDP = fixSDPFormat(offer.sdp);
+                
+                // Validate SDP before using
+                if (!isValidSDP(fixedSDP)) {
+                    console.error('❌ Invalid SDP received');
+                    document.getElementById('connectionStatus').textContent = 'SDP không hợp lệ';
+                    return;
+                }
+                
+                // Use the fixed SDP
+                const fixedOffer = {
                     type: offer.type,
-                    sdp: cleanSDP(offer.sdp)
+                    sdp: fixedSDP
                 };
                 
-                await peerConnection.setRemoteDescription(cleanedOffer);
-                console.log('✅ Set cleaned remote description from offer');
+                await peerConnection.setRemoteDescription(fixedOffer);
+                console.log('✅ Set remote description from offer');
                 
-                const rawAnswer = await peerConnection.createAnswer();
-                console.log('✅ Answer created:', rawAnswer.type);
+                const answer = await peerConnection.createAnswer();
+                console.log('✅ Answer created:', answer.type);
                 
-                // Set raw answer as local description
-                await peerConnection.setLocalDescription(rawAnswer);
-                console.log('✅ Raw answer set as local description');
+                await peerConnection.setLocalDescription(answer);
+                console.log('✅ Answer set as local description');
                 
-                // Clean answer only for sending
-                const cleanedAnswer = {
-                    type: rawAnswer.type,
-                    sdp: cleanSDP(rawAnswer.sdp)
+                // Log answer SDP for debugging
+                logSDPDetails(answer.sdp, 'Created Answer');
+                
+                // Fix answer SDP before sending
+                const fixedAnswerSDP = fixSDPFormat(answer.sdp);
+                const fixedAnswer = {
+                    type: answer.type,
+                    sdp: fixedAnswerSDP
                 };
                 
-                sendSignal('answer', cleanedAnswer);
-                console.log('📡 Cleaned answer sent via signaling');
+                sendSignal('answer', fixedAnswer);
+                console.log('📡 Fixed answer sent via signaling');
             } catch (error) {
                 console.error('❌ Error handling offer:', error);
-                document.getElementById('connectionStatus').textContent = 'Lỗi xử lý offer: ' + error.message;
+                console.error('❌ Full error details:', error.name, error.message);
+                
+                // Try to provide more specific error info
+                if (error.message.includes('codec')) {
+                    document.getElementById('connectionStatus').textContent = 'Lỗi codec - trình duyệt không tương thích';
+                } else if (error.message.includes('parse') || error.message.includes('Invalid SDP')) {
+                    document.getElementById('connectionStatus').textContent = 'Lỗi định dạng SDP';
+                } else {
+                    document.getElementById('connectionStatus').textContent = 'Lỗi xử lý offer: ' + error.message;
+                }
             }
         }
 
@@ -1043,16 +1022,30 @@
             try {
                 console.log('📨 Received answer:', answer.type);
                 
-                // Clean the received answer SDP
-                const cleanedAnswer = {
+                // Log received SDP for debugging
+                logSDPDetails(answer.sdp, 'Received Answer');
+                
+                // Fix SDP format issues
+                const fixedSDP = fixSDPFormat(answer.sdp);
+                
+                // Validate SDP before using
+                if (!isValidSDP(fixedSDP)) {
+                    console.error('❌ Invalid SDP received');
+                    document.getElementById('connectionStatus').textContent = 'SDP không hợp lệ';
+                    return;
+                }
+                
+                // Use the fixed SDP
+                const fixedAnswer = {
                     type: answer.type,
-                    sdp: cleanSDP(answer.sdp)
+                    sdp: fixedSDP
                 };
                 
-                await peerConnection.setRemoteDescription(cleanedAnswer);
-                console.log('✅ Cleaned answer processed successfully - WebRTC negotiation complete!');
+                await peerConnection.setRemoteDescription(fixedAnswer);
+                console.log('✅ Answer processed successfully - WebRTC negotiation complete!');
             } catch (error) {
                 console.error('❌ Error handling answer:', error);
+                console.error('❌ Full error details:', error.name, error.message);
                 document.getElementById('connectionStatus').textContent = 'Lỗi xử lý answer: ' + error.message;
             }
         }

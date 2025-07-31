@@ -33,6 +33,14 @@ class HomeController extends Controller
             ->limit(3)
             ->get();
 
+        // Lấy bài viết cho phần hero (2 bài viết có nhiều like nhất hoặc mới nhất)
+        $heroPosts = BaiViet::with('user')
+            ->where('is_draft', false)
+            ->orderByDesc('soluotlike')
+            ->orderByDesc('thoigiandang')
+            ->limit(2)
+            ->get();
+
         // Lấy danh sách categories
         $categories = Category::active()->ordered()->withCount('publishedBaiViets as posts_count')->get();
 
@@ -44,7 +52,7 @@ class HomeController extends Controller
                 ->toArray();
         }
 
-        return view('home', compact('user', 'baiviets', 'featuredPosts', 'userLikedPosts', 'categories'));
+        return view('home', compact('user', 'baiviets', 'featuredPosts', 'heroPosts', 'userLikedPosts', 'categories'));
     }
 
     public function search(Request $request)
@@ -148,5 +156,62 @@ class HomeController extends Controller
         }
 
         return view('search', compact('user', 'baiviets', 'userLikedPosts', 'query', 'filter', 'liked', 'commented', 'friendPosts', 'type'));
+    }
+
+    public function community()
+    {
+        // Lấy thông tin user nếu đã đăng nhập
+        $user = null;
+        if (Session::has('user_id')) {
+            $user = User::find(Session::get('user_id'));
+        }
+
+        // Lấy thống kê cộng đồng
+        $totalUsers = User::count();
+        $totalPosts = BaiViet::where('is_draft', false)->count();
+        $totalLikes = BaiViet::sum('soluotlike');
+        $activeUsersToday = User::whereDate('updated_at', today())->count();
+
+        // Lấy top users (theo số bài viết)
+        $topWriters = User::withCount(['baiviets' => function($query) {
+            $query->where('is_draft', false);
+        }])
+        ->having('baiviets_count', '>', 0)
+        ->orderByDesc('baiviets_count')
+        ->limit(10)
+        ->get();
+
+        // Lấy bài viết mới nhất từ cộng đồng
+        $recentPosts = BaiViet::with('user')
+            ->where('is_draft', false)
+            ->orderByDesc('thoigiandang')
+            ->limit(5)
+            ->get();
+
+        // Lấy người dùng mới tham gia
+        $newMembers = User::orderByDesc('ngaytao')
+            ->limit(8)
+            ->get();
+
+        return view('community.index', compact('user', 'totalUsers', 'totalPosts', 'totalLikes', 'activeUsersToday', 'topWriters', 'recentPosts', 'newMembers'));
+    }
+
+    public function about()
+    {
+        // Lấy thông tin user nếu đã đăng nhập
+        $user = null;
+        if (Session::has('user_id')) {
+            $user = User::find(Session::get('user_id'));
+        }
+
+        // Thống kê tổng quan
+        $stats = [
+            'users' => User::count(),
+            'posts' => BaiViet::where('is_draft', false)->count(),
+            'categories' => Category::count(),
+            'total_likes' => BaiViet::sum('soluotlike')
+        ];
+
+        return view('about.index', compact('user', 'stats'));
     }
 }

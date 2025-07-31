@@ -21,6 +21,10 @@ use Illuminate\Support\Facades\Storage;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/search', [HomeController::class, 'search'])->name('search');
 
+// Community and About pages
+Route::get('/community', [HomeController::class, 'community'])->name('community');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
+
 // Category routes
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('/category/{slug}', [CategoryController::class, 'show'])->name('category.show');
@@ -59,9 +63,19 @@ Route::post('/comment/{id}/pin', [App\Http\Controllers\PostController::class, 'p
 Route::post('/user/{id}/follow', [UserController::class, 'toggleFollow'])->name('user.follow');
 Route::get('/user/{id}/profile', [UserController::class, 'showProfile'])->name('user.profile');
 
+// Routes for profile lists
+Route::get('/user/{id}/posts', [UserController::class, 'getUserPosts'])->name('user.posts');
+Route::get('/user/{id}/followers', [UserController::class, 'getUserFollowers'])->name('user.followers');
+Route::get('/user/{id}/following', [UserController::class, 'getUserFollowing'])->name('user.following');
+Route::get('/user/{id}/likes', [UserController::class, 'getUserLikes'])->name('user.likes');
+
 // Thêm route chỉnh sửa và cập nhật profile
 Route::get('/profile/{id}/edit', [UserController::class, 'edit'])->name('profile.edit');
 Route::put('/profile/{id}', [UserController::class, 'update'])->name('profile.update');
+
+// Settings routes
+Route::get('/settings', [UserController::class, 'showSettings'])->name('settings');
+Route::post('/settings/update', [UserController::class, 'updateSettings'])->name('settings.update');
 
 // Tìm kiếm bạn bè
 Route::get('/friends/search', [UserController::class, 'searchFriends'])->name('friends.search');

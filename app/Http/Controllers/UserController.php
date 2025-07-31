@@ -239,4 +239,127 @@ class UserController extends Controller
         });
         return response()->json(['following' => $following]);
     }
+
+    // Lấy danh sách bài viết của user
+    public function getUserPosts($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            abort(404);
+        }
+
+        $posts = BaiViet::with('user')
+            ->where('user_id', $id)
+            ->where('is_draft', false)
+            ->orderByDesc('thoigiandang')
+            ->paginate(10);
+
+        return view('user.posts', compact('user', 'posts'));
+    }
+
+    // Lấy danh sách người theo dõi của user
+    public function getUserFollowers($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            abort(404);
+        }
+
+        $followers = $user->followersList()->paginate(20);
+
+        return view('user.followers', compact('user', 'followers'));
+    }
+
+    // Lấy danh sách người mà user đang theo dõi
+    public function getUserFollowing($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            abort(404);
+        }
+
+        $following = $user->following()->paginate(20);
+
+        return view('user.following', compact('user', 'following'));
+    }
+
+    // Lấy danh sách bài viết mà user đã thích
+    public function getUserLikes($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            abort(404);
+        }
+
+        // Giả sử có model Like để quản lý likes
+        $likedPosts = BaiViet::whereHas('likes', function($query) use ($id) {
+            $query->where('user_id', $id);
+        })->with('user')->orderByDesc('thoigiandang')->paginate(10);
+
+        return view('user.likes', compact('user', 'likedPosts'));
+    }
+
+    // Hiển thị trang cài đặt
+    public function showSettings()
+    {
+        if (!Session::has('user_id')) {
+            return redirect()->route('login')->with('error', 'Vui lòng đăng nhập để truy cập cài đặt');
+        }
+
+        $user = User::find(Session::get('user_id'));
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Không tìm thấy thông tin người dùng');
+        }
+
+        return view('settings.index', compact('user'));
+    }
+
+    // Cập nhật cài đặt
+    public function updateSettings(Request $request)
+    {
+        if (!Session::has('user_id')) {
+            return response()->json(['error' => 'Vui lòng đăng nhập'], 401);
+        }
+
+        $user = User::find(Session::get('user_id'));
+        if (!$user) {
+            return response()->json(['error' => 'Không tìm thấy thông tin người dùng'], 404);
+        }
+
+        $validated = $request->validate([
+            'theme' => 'nullable|in:light,dark',
+            'language' => 'nullable|in:vi,en',
+            'notifications_enabled' => 'nullable|boolean',
+            'email_notifications' => 'nullable|boolean',
+            'privacy_mode' => 'nullable|boolean',
+        ]);
+
+        // Cập nhật cài đặt
+        if (isset($validated['theme'])) {
+            $user->theme = $validated['theme'];
+        }
+        
+        if (isset($validated['language'])) {
+            $user->language = $validated['language'];
+        }
+
+        if (isset($validated['notifications_enabled'])) {
+            $user->notifications_enabled = $validated['notifications_enabled'];
+        }
+
+        if (isset($validated['email_notifications'])) {
+            $user->email_notifications = $validated['email_notifications'];
+        }
+
+        if (isset($validated['privacy_mode'])) {
+            $user->privacy_mode = $validated['privacy_mode'];
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cài đặt đã được cập nhật thành công!'
+        ]);
+    }
 }

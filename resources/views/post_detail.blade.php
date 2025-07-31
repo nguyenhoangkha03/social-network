@@ -1045,7 +1045,7 @@
                     return;
                 }
                 // Kiểm tra quyền (chỉ chủ bài viết)
-                @if(!isset($user) || $user - > user_id != $post - > user - > user_id)
+                @if(!isset($user) || $user->user_id != $post->user->user_id)
                 alert('Chỉ chủ bài viết mới được ghim!');
                 return;
                 @endif

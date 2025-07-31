@@ -31,7 +31,12 @@ class User extends Authenticatable
         'ngaycapnhat',
         'email',
         'sodienthoai',
-        'trangthai'
+        'trangthai',
+        'theme',
+        'language',
+        'notifications_enabled',
+        'email_notifications',
+        'privacy_mode'
     ];
 
     protected $hidden = [
@@ -42,6 +47,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'notifications_enabled' => 'boolean',
+        'email_notifications' => 'boolean',
+        'privacy_mode' => 'boolean',
     ];
 
     // Các quan hệ đã rất đầy đủ

@@ -110,6 +110,29 @@
             font-size: 1.125rem;
         }
 
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: var(--space-6);
+            padding: var(--space-2) var(--space-4);
+            background: var(--surface-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .back-btn:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-dark);
+            transform: translateX(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
         .form-group {
             margin-bottom: var(--space-6);
         }
@@ -502,6 +525,11 @@
             <!-- Main Editor -->
             <div class="main-editor">
                 <div class="editor-header">
+                    <a href="{{ route('home') }}" class="back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Quay về trang chủ
+                    </a>
+                    
                     <h1>
                         <i class="fas fa-{{ isset($editPost) ? 'edit' : 'plus-circle' }}"></i>
                         {{ isset($editPost) ? 'Chỉnh sửa bài viết' : 'Tạo bài viết mới' }}
