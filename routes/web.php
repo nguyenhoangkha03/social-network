@@ -110,6 +110,24 @@ Route::get('/messages/{friend_id}', [UserController::class, 'chatWithFriend'])->
 // Route gửi tin nhắn
 Route::post('/messages/send', [App\Http\Controllers\TinNhanController::class, 'sendMessage'])->name('messages.send');
 
+// API cho thông báo
+Route::get('/api/notifications', function () {
+    $user = auth()->user() ?? (session('user_id') ? \App\Models\User::find(session('user_id')) : null);
+    if (!$user) return response()->json(['error' => 'Chưa đăng nhập'], 401);
+    
+    $notifications = $user->myNotifications()->orderBy('created_at', 'desc')->limit(10)->get()->map(function($notification) {
+        return [
+            'id' => $notification->id,
+            'message' => $notification->getMessage(),
+            'is_read' => $notification->is_read,
+            'created_at' => $notification->created_at,
+            'type' => $notification->type
+        ];
+    });
+    
+    return response()->json(['notifications' => $notifications]);
+})->name('api.notifications');
+
 // Đánh dấu tất cả thông báo là đã đọc
 Route::post('/notifications/mark-read', function () {
     $user = auth()->user() ?? (session('user_id') ? \App\Models\User::find(session('user_id')) : null);
@@ -117,6 +135,20 @@ Route::post('/notifications/mark-read', function () {
     $user->myNotifications()->where('is_read', false)->update(['is_read' => true]);
     return response()->json(['success' => true]);
 })->name('notifications.markRead');
+
+// Đánh dấu một thông báo cụ thể là đã đọc
+Route::post('/notifications/{id}/mark-read', function ($id) {
+    $user = auth()->user() ?? (session('user_id') ? \App\Models\User::find(session('user_id')) : null);
+    if (!$user) return response()->json(['success' => false]);
+    
+    $notification = $user->myNotifications()->find($id);
+    if ($notification) {
+        $notification->update(['is_read' => true]);
+        return response()->json(['success' => true]);
+    }
+    
+    return response()->json(['success' => false, 'error' => 'Thông báo không tồn tại']);
+})->name('notifications.markReadSingle');
 
 Route::get('/friends', [FriendController::class, 'index']);
 Route::post('/upload-image', [App\Http\Controllers\PostController::class, 'uploadImage']);

@@ -1247,8 +1247,26 @@
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
+                                    // Remove notification badge
                                     document.querySelector('.notification-badge')?.remove();
-                                    loadNotifications();
+                                    
+                                    // Update all notification items to read state
+                                    document.querySelectorAll('.notification-item').forEach(item => {
+                                        item.style.background = 'transparent';
+                                        item.dataset.read = 'true';
+                                        
+                                        // Remove unread indicators
+                                        const unreadIndicator = item.querySelector('.unread-indicator');
+                                        if (unreadIndicator) {
+                                            unreadIndicator.remove();
+                                        }
+                                        
+                                        // Update font weight
+                                        const messageElement = item.querySelector('p');
+                                        if (messageElement) {
+                                            messageElement.style.fontWeight = 'var(--font-normal)';
+                                        }
+                                    });
                                 }
                             })
                             .catch(error => console.error('Error marking notifications as read:', error));
@@ -1258,30 +1276,108 @@
 
             function loadNotifications() {
                 @if(isset($user) && $user)
-                const notifications = @json($user->myNotifications()->orderBy('created_at', 'desc')->limit(10)->get());
-
-                if (notifications.length > 0) {
-                    let notificationsHtml = '';
-                    notifications.forEach(notification => {
-                        const isRead = notification.is_read;
-                        notificationsHtml += `
-                <div style="padding: var(--space-3); border-bottom: 1px solid var(--border-primary); ${!isRead ? 'background: var(--primary-50);' : ''}" data-id="${notification.id}">
-                  <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
-                    <div style="width: 8px; height: 8px; border-radius: var(--radius-full); background: ${!isRead ? 'var(--primary)' : 'transparent'}; margin-top: var(--space-2); flex-shrink: 0;"></div>
-                    <div style="flex: 1;">
-                      <p style="font-size: var(--text-sm); color: var(--text-primary); margin-bottom: var(--space-1); font-weight: ${!isRead ? 'var(--font-semibold)' : 'var(--font-normal)'};">${notification.data || notification.content || 'Bạn có thông báo mới'}</p>
-                      <p style="font-size: var(--text-xs); color: var(--text-tertiary);">${new Date(notification.created_at).toLocaleString('vi-VN')}</p>
-                    </div>
-                  </div>
-                </div>`;
+                // Load notifications via API instead of inline PHP
+                fetch('/api/notifications')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.notifications && data.notifications.length > 0) {
+                            let notificationsHtml = '';
+                            data.notifications.forEach(notification => {
+                                const isRead = notification.is_read;
+                                let iconClass = 'fas fa-bell';
+                                let iconColor = 'var(--primary)';
+                                
+                                // Set icon based on notification type
+                                switch(notification.type) {
+                                    case 'friend_request':
+                                        iconClass = 'fas fa-user-plus';
+                                        iconColor = 'var(--success)';
+                                        break;
+                                    case 'like':
+                                        iconClass = 'fas fa-heart';
+                                        iconColor = '#e91e63';
+                                        break;
+                                    case 'comment':
+                                        iconClass = 'fas fa-comment';
+                                        iconColor = 'var(--primary)';
+                                        break;
+                                    case 'message':
+                                        iconClass = 'fas fa-envelope';
+                                        iconColor = 'var(--info)';
+                                        break;
+                                }
+                                
+                                notificationsHtml += `
+                        <div class="notification-item" style="padding: var(--space-3); border-bottom: 1px solid var(--border-primary); ${!isRead ? 'background: var(--primary-50);' : ''} cursor: pointer; transition: background-color 0.2s ease;" 
+                             data-id="${notification.id}" data-read="${isRead}" onclick="markNotificationAsRead(${notification.id})">
+                          <div style="display: flex; align-items: flex-start; gap: var(--space-3);">
+                            <div style="width: 40px; height: 40px; border-radius: var(--radius-full); background: ${iconColor}20; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i class="${iconClass}" style="color: ${iconColor}; font-size: 16px;"></i>
+                            </div>
+                            <div style="flex: 1;">
+                              <p style="font-size: var(--text-sm); color: var(--text-primary); margin-bottom: var(--space-1); font-weight: ${!isRead ? 'var(--font-semibold)' : 'var(--font-normal)'};">${notification.message}</p>
+                              <p style="font-size: var(--text-xs); color: var(--text-tertiary);">${new Date(notification.created_at).toLocaleString('vi-VN')}</p>
+                            </div>
+                            ${!isRead ? '<div class="unread-indicator" style="width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--primary); flex-shrink: 0; margin-top: var(--space-2);"></div>' : ''}
+                          </div>
+                        </div>`;
+                            });
+                            notificationList.innerHTML = notificationsHtml;
+                        } else {
+                            notificationList.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: var(--space-8);"><i class="fas fa-bell" style="font-size: var(--text-2xl); margin-bottom: var(--space-2);"></i><p>Chưa có thông báo nào</p></div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading notifications:', error);
+                        notificationList.innerHTML = '<div style="text-align: center; color: var(--error); padding: var(--space-8);"><i class="fas fa-exclamation-triangle" style="font-size: var(--text-2xl); margin-bottom: var(--space-2);"></i><p>Có lỗi xảy ra khi tải thông báo</p></div>';
                     });
-                    notificationList.innerHTML = notificationsHtml;
-                } else {
-                    notificationList.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: var(--space-8);"><i class="fas fa-bell" style="font-size: var(--text-2xl); margin-bottom: var(--space-2);"></i><p>Chưa có thông báo nào</p></div>';
-                }
                 @else
                 notificationList.innerHTML = '<div style="text-align: center; color: var(--text-tertiary); padding: var(--space-8);"><i class="fas fa-sign-in-alt" style="font-size: var(--text-2xl); margin-bottom: var(--space-2);"></i><p>Đăng nhập để xem thông báo</p></div>';
                 @endif
+            }
+
+            // Mark single notification as read
+            function markNotificationAsRead(notificationId) {
+                const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+                const isRead = notificationElement.dataset.read === 'true';
+                
+                if (isRead) return; // Already read, don't do anything
+                
+                fetch(`/notifications/${notificationId}/mark-read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update UI immediately
+                        notificationElement.style.background = 'transparent';
+                        notificationElement.dataset.read = 'true';
+                        
+                        // Remove unread indicator
+                        const unreadIndicator = notificationElement.querySelector('.unread-indicator');
+                        if (unreadIndicator) {
+                            unreadIndicator.remove();
+                        }
+                        
+                        // Update font weight
+                        const messageElement = notificationElement.querySelector('p');
+                        if (messageElement) {
+                            messageElement.style.fontWeight = 'var(--font-normal)';
+                        }
+                        
+                        // Check if we need to remove the badge
+                        const hasUnreadNotifications = document.querySelector('.notification-item[data-read="false"]');
+                        if (!hasUnreadNotifications) {
+                            const badge = document.querySelector('.notification-badge');
+                            if (badge) badge.remove();
+                        }
+                    }
+                })
+                .catch(error => console.error('Error marking notification as read:', error));
             }
 
             // User dropdown toggle

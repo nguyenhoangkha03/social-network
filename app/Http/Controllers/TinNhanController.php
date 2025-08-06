@@ -55,6 +55,18 @@ class TinNhanController extends Controller
             'thoigiantao' => now()
         ]);
 
+        // Tạo thông báo cho người nhận tin nhắn
+        $senderUser = User::find($senderId);
+        \App\Models\Notification::create([
+            'user_id' => $request->receiver_id,
+            'type' => 'message',
+            'data' => [
+                'from_user_id' => $senderId,
+                'from_user_name' => $senderUser->hoten ?? $senderUser->username ?? 'Người dùng',
+                'message_preview' => $imagePath ? 'Đã gửi một hình ảnh' : (strlen($messageContent) > 50 ? substr($messageContent, 0, 50) . '...' : $messageContent)
+            ]
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Đã gửi tin nhắn thành công',

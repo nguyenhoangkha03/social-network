@@ -26,7 +26,9 @@ class Notification extends Model
             case 'like':
                 return ($this->data['from_user_name'] ?? 'Ai đó') . ' đã thích bài viết của bạn';
             case 'message':
-                return ($this->data['from_user_name'] ?? 'Ai đó') . ' đã gửi tin nhắn cho bạn';
+                $fromUser = $this->data['from_user_name'] ?? 'Ai đó';
+                $preview = $this->data['message_preview'] ?? 'đã gửi tin nhắn cho bạn';
+                return $fromUser . ': ' . $preview;
             case 'comment':
                 return ($this->data['from_user_name'] ?? 'Ai đó') . ' đã bình luận bài viết của bạn';
             default:
